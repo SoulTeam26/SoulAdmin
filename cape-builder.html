@@ -765,7 +765,6 @@ async function pushFirebase(){
   const id=payload.id;
   // read existing to preserve createdAt
   $('#fb-log').textContent='Reading existing...';
-  let existing=null;
   // ---- Soul Coins publish gate: publishing to the store costs coins ----
   let _bUser = null;
   try { _bUser = firebase.auth().currentUser; } catch(e){}
