@@ -275,7 +275,7 @@ input[type=file]{padding:8px}
           <input id="gh-token" type="password" placeholder="github_pat_... or ghp_...">
           <button class="btn btn-ghost" onclick="toggleToken()" style="padding:11px 14px"><i class="fa-solid fa-eye" id="token-eye"></i></button>
         </div>
-        <div class="hint">Stored in <code>localStorage</code> only (shared with cape-builder).</div>
+        <div class="hint"><b style="color:var(--alert)">The auto-loaded team token is READ-ONLY</b> (public store token). To <b>push</b>, paste YOUR PAT with <code>Contents:write</code>. Saved in <code>localStorage</code> of this browser only (shared with cape-builder).</div>
         <div class="row">
           <div><label>Repo (shields)</label><input id="gh-repo" value="SoulTeam26/Cosmetics"></div>
           <div><label>Branch</label><input id="gh-branch" value="main"></div>
@@ -1265,7 +1265,7 @@ async function pushGithub() {
     $('#gh-log').scrollTop = $('#gh-log').scrollHeight;
     const { status, text } = await pushSingleFile(token, repo, branch, repoPath, f.base64, msg);
     if (status === 200 || status === 201) { $('#gh-log').textContent += ` -> ok ${status}\n`; success++; }
-    else { $('#gh-log').textContent += ` -> FAIL ${status}: ${text.slice(0, 600)}\n`; fail++; ok = false; }
+    else { $('#gh-log').textContent += ` -> FAIL ${status}: ${text.slice(0, 600)}\n`; fail++; ok = false; if (status === 403) $('#gh-log').textContent += `   ⛔ READ-ONLY TOKEN — the auto-loaded team PAT from Firebase can only VIEW (it's the store's public token). PASTE YOUR OWN WRITE PAT in the GitHub PAT box above (needs Contents:write; auto-saves in this browser) and push again.\n`; }
     setProgress('#gh-progress', Math.round((i + 1) / frames.length * 100), true);
     await new Promise(r => setTimeout(r, 500));
     if (!isAnim) break;
