@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soul Shield Builder â€” Custom Hand Shields</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<link rel="shortcut icon" href="Soul-Web/soul.png" type="image/x-icon">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+<script>
+  // Firebase RTDB + Auth (compat) â€” used for the Soul Coins publish gate.
+  try {
+    if (!firebase.apps.length) firebase.initializeApp({
+      apiKey: "AIzaSyCAalZXTgdIg58oip1Ang5CJVPRdp9YzzQ",
+      authDomain: "soul-backend.firebaseapp.com",
+      databaseURL: "https://soul-backend-default-rtdb.firebaseio.com",
+      projectId: "soul-backend",
+      storageBucket: "soul-backend.firebasestorage.app",
+      messagingSenderId: "553383169433",
+      appId: "1:553383169433:web:03aa34c90ebda216169708"
+    });
+  } catch (e) { console.warn('Firebase init failed:', e); }
+</script>
+<style>
+:root{--paper:#121113;--paper-dim:#1A1818;--ink:#F5F1ED;--ink-soft:#D8D2CB;--muted:#8C8680;--bolt:#30b0ff;--bolt-deep:#1f82c8;--alert:#FFB13B;--ok:#22c55e;--err:#ef4444;--line:rgba(245,241,237,0.12);}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.mono{font-family:'JetBrains Mono',monospace}
+.topnav{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:3px solid var(--ink);display:flex;align-items:center;justify-content:space-between;padding:14px 20px;max-width:1280px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:-0.02em;font-size:18px}
+.brand img{width:32px;height:32px}
+.navlinks{display:flex;gap:18px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.navlinks a{padding:6px 10px;border:2px solid transparent}
+.navlinks a.active{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.hero{border-bottom:3px solid var(--ink);background:radial-gradient(600px 300px at 20% 0%, rgba(48,176,255,.12), transparent), var(--paper);padding:32px 20px}
+.hero-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center}
+.hero h1{font-weight:900;font-size:clamp(28px,4vw,44px);letter-spacing:-0.03em;margin:0 0 10px;line-height:1}
+.hero h1 span{background:var(--bolt);padding:0 8px;box-shadow:5px 5px 0 var(--ink);color:var(--paper)}
+.hero p{color:var(--ink-soft);line-height:1.6;margin:0 0 16px;max-width:600px}
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:2px solid var(--ink);padding:6px 10px;background:var(--paper)}
+.badge i{color:var(--bolt)}
+.wrap{max-width:1280px;margin:0 auto;padding:24px 20px}
+.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:20px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}.hero-inner{grid-template-columns:1fr}}
+.card{background:var(--paper-dim);border:3px solid var(--ink);padding:20px;box-shadow:6px 6px 0 var(--ink)}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.card-head h2{font-weight:900;font-size:18px;margin:0;letter-spacing:-0.01em}
+.card-head .step{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--bolt);color:var(--paper);padding:4px 8px;border:2px solid var(--ink)}
+label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block;margin:14px 0 6px}
+label small{color:var(--bolt);font-weight:400;letter-spacing:0}
+input,select,textarea{width:100%;background:var(--paper);border:2px solid var(--ink);color:var(--ink);padding:11px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:border-color .12s}
+input:focus,select:focus,textarea:focus{border-color:var(--bolt)}
+input[type=color]{padding:2px;height:44px;cursor:pointer}
+input[type=file]{padding:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.row,.row3{grid-template-columns:1fr}}
+.hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}
+.drop{border:2px dashed var(--ink);background:var(--paper);padding:18px;text-align:center;cursor:pointer;transition:border-color .12s, background .12s}
+.drop:hover{border-color:var(--bolt);background:rgba(48,176,255,.06)}
+.drop i{font-size:22px;color:var(--bolt);margin-bottom:8px;display:block}
+.drop b{font-family:'JetBrains Mono',monospace;font-size:13px}
+.drop p{font-size:12px;color:var(--muted);margin:6px 0 0}
+.drop.dragover{border-color:var(--ok);background:rgba(34,197,94,.08)}
+.btn{appearance:none;border:3px solid var(--ink);background:var(--ink);color:var(--paper);padding:12px 16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s, box-shadow .12s, background .12s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--bolt-deep)}
+.btn:disabled{opacity:.5;pointer-events:none;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;color:var(--bolt);border-color:var(--bolt)}
+.btn-ghost:hover{background:var(--bolt);color:var(--paper)}
+.btn-ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn-warn{background:var(--alert);border-color:var(--alert);color:#000}
+.btn.sm{padding:8px 10px;font-size:11px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.log{margin-top:14px;background:#0a0a0a;border:2px solid var(--ink);padding:12px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;max-height:240px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.toggle{position:relative;display:inline-flex;align-items:center;gap:10px;cursor:pointer}
+.toggle input{width:44px;height:24px;appearance:none;background:var(--paper);border:2px solid var(--ink);position:relative;cursor:pointer}
+.toggle input:checked{background:var(--bolt);border-color:var(--bolt)}
+.toggle input::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:var(--ink);transition:transform .18s}
+.toggle input:checked::after{transform:translateX(20px);background:var(--paper)}
+.small{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.divider{height:2px;background:var(--ink);margin:18px 0;opacity:.15}
+.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+.hidden{display:none !important}
+/* editor */
+.ed-wrap{display:grid;grid-template-columns:1fr;gap:12px}
+#ed-canvas{width:100%;max-width:512px;aspect-ratio:1/1;background:repeating-conic-gradient(#1c1c1c 0 25%, #141414 0 50%) 0 0/32px 32px;border:2px solid var(--ink);image-rendering:pixelated;cursor:crosshair;touch-action:none}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:90px;background:transparent;color:var(--ink-soft);border:2px solid var(--ink-soft);padding:9px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;text-transform:uppercase;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.frames-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;max-height:180px;overflow:auto;padding:8px;background:var(--paper);border:2px solid var(--ink)}
+.frames-strip img{width:64px;height:64px;object-fit:contain;background:var(--paper-dim);border:2px solid var(--line);image-rendering:pixelated;cursor:pointer}
+.frames-strip img.sel{border-color:var(--bolt)}
+.frames-strip .ph{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.pv2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pvbox{background:#0b0c0e;border:2px solid var(--ink);min-height:220px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.pvbox canvas{width:100%;height:100%;display:block}
+.pvbox .tag{position:absolute;left:8px;top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;background:var(--ink);color:var(--paper);padding:3px 7px}
+#flat-canvas{image-rendering:pixelated}
+.stat{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;border:1px solid var(--ink);padding:6px 8px;background:var(--paper)}
+.stat b{color:var(--bolt)}
+.progress{height:8px;background:var(--paper);border:2px solid var(--ink);overflow:hidden;margin-top:10px}
+.progress i{display:block;height:100%;background:var(--bolt);width:0%;transition:width .25s}
+</style>
+</head>
+<body>
+<div class="topnav">
+  <div class="brand"><img src="Soul-Web/soul.png" onerror="this.style.display='none'"> <span>Soul Shield Builder</span> <span style="font-family:'JetBrains Mono',monospace;font-size:10px;border:2px solid var(--ink);padding:3px 6px;margin-left:6px">v1.0</span></div>
+  <div class="navlinks">
+    <a href="https://soulclientmc.vercel.app/" target="_blank"><i class="fa-solid fa-store"></i> Store</a>
+    <a href="https://admin-mu-drab.vercel.app/"><i class="fa-solid fa-shield-halved"></i> Admin</a>
+    <a href="cape-builder.html" target="_blank"><i class="fa-solid fa-shirt"></i> Capes</a>
+    <a class="active" href="#"><i class="fa-solid fa-shield"></i> Shields</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="badge"><i class="fa-solid fa-bolt"></i> GitHub + Firebase auto deploy</div>
+      <h1>Custom <span>hand shield</span> studio</h1>
+      <p>Vanilla 64Ã—64 shield template par paint karo: <b>front</b> plate me apni image upload karo (back alag se), <b>rim</b> aur <b>handle</b> ko color karo, 3D player preview me live dekho, phir <code>SoulTeam26/Cosmetics</code> ke <code>shields/</code> folder + Firebase <code>capes/catalog/{id}</code> me one-click push. Static + <b>animated</b> (frame-wise) dono supported.</p>
+      <div class="top-actions">
+        <span class="stat"><i class="fa-solid fa-paintbrush"></i> <b>Regions</b> wood/rim/handle</span>
+        <span class="stat"><i class="fa-solid fa-cube"></i> <b>Live 3D</b> player+shield</span>
+        <span class="stat"><i class="fa-solid fa-film"></i> <b>Animated</b> frames</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2><i class="fa-solid fa-circle-info"></i> Regions</h2></div>
+      <div class="kv mono" style="font-size:12px"><span style="color:var(--muted)">FRONT</span><span>Design side wood (x2â€“11). Image upload yahin jayegi (Back select ho to back me). 1px rim ring untouched.</span></div>
+      <div class="kv mono" style="font-size:12px"><span style="color:var(--muted)">BACK</span><span>Peeche ki side wood (x15â€“24) â€” alag design possible.</span></div>
+      <div class="kv mono" style="font-size:12px"><span style="color:var(--muted)">RIM</span><span>Outer line + edge band â€” alag se color karo, wood upload se untouched.</span></div>
+      <div class="kv mono" style="font-size:12px"><span style="color:var(--muted)">HANDLE</span><span>Peeche ka handle â€” alag se color/clear.</span></div>
+      <p class="hint">Open via <code>http://localhost:8000/shield-builder.html</code> â€” <code>file://</code> blocks Firebase &amp; GitHub.</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="grid">
+    <div>
+      <!-- DETAILS -->
+      <div class="card">
+        <div class="card-head"><h2><i class="fa-solid fa-shield"></i> 1 â€” Shield details</h2><span class="step">Step 1</span></div>
+        <label>Shield name <small>*</small></label>
+        <input id="sh-name" placeholder="Soul Guard" value="Soul Guard" oninput="onNameInput()">
+        <div class="row">
+          <div>
+            <label>ID (catalog key) <small>* auto-slug</small></label>
+            <input id="sh-id" placeholder="soul-guard" value="soul-guard" oninput="onIdInput()">
+            <div class="hint" id="id-hint">File: <code>shields/soul-guard.png</code></div>
+          </div>
+          <div>
+            <label>Price (Soul Coins) <small>*</small></label>
+            <input id="sh-price" type="number" step="1" min="0" value="300">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Type</label>
+            <select id="sh-type"><option value="SHIELD" selected>SHIELD</option></select>
+          </div>
+          <div>
+            <label>Icon URL <small>optional</small></label>
+            <input id="sh-icon" placeholder="https://raw.githubusercontent.com/SoulTeams/Post-Images/main/...">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Animated?</label>
+            <label class="toggle"><input type="checkbox" id="sh-animated" onchange="onAnimatedToggle()"><span class="small" id="anim-label">Static â€” single PNG</span></label>
+          </div>
+          <div>
+            <label>Free (everyone owns)</label>
+            <label class="toggle"><input type="checkbox" id="sh-free"><span class="small">No â€” paid shield</span></label>
+          </div>
+        </div>
+        <div id="anim-fields" class="row" style="display:none">
+          <div><label>Frame delay (ms)</label><input id="frame-delay" type="number" min="20" step="10" value="100"></div>
+          <div><label>Frames</label><div class="hint" id="frames-expected" style="margin-top:12px">1 frame (static)</div></div>
+        </div>
+      </div>
+
+      <!-- EDITOR -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-head"><h2><i class="fa-solid fa-paintbrush"></i> 2 â€” Texture editor <span class="small">64Ã—64</span></h2><span class="step">Step 2</span></div>
+        <label>Region</label>
+        <div class="seg" id="region-seg">
+          <button data-r="front" class="on">Front</button>
+          <button data-r="back">Back</button>
+          <button data-r="rim">Rim</button>
+          <button data-r="handle">Handle</button>
+        </div>
+        <label>Tool</label>
+        <div class="seg" id="tool-seg">
+          <button data-t="brush" class="on">Brush</button>
+          <button data-t="eraser">Eraser</button>
+          <button data-t="fill">Fill region</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Color</label><input id="ed-color" type="color" value="#30b0ff"></div>
+          <div><label>Brush size <small>px</small></label><input id="ed-size" type="number" min="1" max="32" value="1"></div>
+        </div>
+        <div style="margin-top:12px">
+          <label>Image resolution <small id="res-label">64Ã—64 (vanilla)</small></label>
+          <input id="ed-res" type="range" min="1" max="3" step="1" value="1" oninput="setRes(parseInt(this.value))">
+          <div class="hint">1 = vanilla 64px Â· 2 = 128px HD Â· 3 = 256px HD. Best: <b>pehle resolution set karo, phir upload</b> â€” upload hamesha full sharp rehta hai. Baad me badalne par fresh uploads dobara sharp bante hain, painted work crisp rehta hai.</div>
+        </div>
+        <label>Canvas <small>click / drag to paint â€” live 3D me dikhega</small></label>
+        <canvas id="ed-canvas" width="512" height="512"></canvas>
+        <div class="hint">Hover = region highlight. Wood me image upload karne ke liye neeche drop use karo.</div>
+        <div class="toolbar">
+          <button class="btn sm btn-ghost" onclick="fillRegion()"><i class="fa-solid fa-fill-drip"></i> Fill region</button>
+          <button class="btn sm btn-ghost" onclick="clearRegion()"><i class="fa-solid fa-xmark"></i> Clear region</button>
+          <button class="btn sm btn-ghost" onclick="resetRegion()"><i class="fa-solid fa-eraser"></i> Reset region</button>
+          <button class="btn sm btn-ghost" onclick="toggleOverlay()"><i class="fa-solid fa-layer-group"></i> Regions: <span id="overlay-label">OFF</span></button>
+          <button class="btn sm btn-ghost" onclick="resetFrame()"><i class="fa-solid fa-rotate"></i> Reset to template</button>
+          <button class="btn sm" onclick="document.getElementById('sheet-input').click()"><i class="fa-solid fa-folder-open"></i> Load sheet</button>
+          <input id="sheet-input" type="file" accept="image/png,image/*" multiple class="hidden" onchange="onSheetSelected(event)">
+        </div>
+        <div class="hint">Load sheet = poori 64Ã—64 (ya kisi bhi size ki) shield PNG computer se seedha frame me â€” exact pixels, region compositing nahi.</div>
+        <div class="divider"></div>
+        <label>Load existing shield <small>GitHub + Firebase se wapas editor me</small></label>
+        <div style="display:flex;gap:8px">
+          <input id="load-id" placeholder="shield-id (e.g. shield-of-sun)" style="flex:1">
+          <button class="btn sm" onclick="loadShield()" style="white-space:nowrap"><i class="fa-solid fa-rotate-left"></i> Load</button>
+        </div>
+        <div class="hint">Static PNG ya animated folder dono load honge. Details (name/price) Firebase catalog se auto-fill honge. GitHub PAT Deploy section me hona chahiye (private repo).</div>
+        <div id="load-info" class="log" style="min-height:36px;margin-top:10px">No shield loaded yet.</div>
+        <div class="divider"></div>
+        <label>Upload image â†’ selected region <small>front / back / rim / handle â€” jo region select hai usi me jayegi</small></label>        <div class="drop" id="drop-img" onclick="document.getElementById('img-input').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="onDropImage(event)">
+          <i class="fa-solid fa-image"></i>
+          <b>Click or drag &amp; drop image</b>
+          <p>Koi bhi PNG/JPG â€” selected region me cover-fit hogi, baaki untouched. Animated ho to har frame image alag se add karo.</p>
+        </div>
+        <input id="img-input" type="file" accept="image/*" multiple class="hidden" onchange="onImagesSelected(event)">
+        <div id="img-info" class="log" style="min-height:36px;margin-top:10px">No image yet â€” paint directly or upload.</div>
+        <div class="divider"></div>
+        <label>Frames <small id="frames-count-label">1</small> <span id="frames-hint">â€” static shield = 1 frame</span></label>
+        <div id="frames-strip" class="frames-strip"><span class="ph">Frame 0 â€” current canvas</span></div>
+        <div class="toolbar">
+          <button class="btn sm" onclick="addFrame()"><i class="fa-solid fa-plus"></i> Add frame (copy current)</button>
+          <button class="btn sm btn-ghost" onclick="deleteFrame()"><i class="fa-solid fa-trash"></i> Delete frame</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <!-- PREVIEW -->
+      <div class="card">
+        <div class="card-head"><h2><i class="fa-solid fa-cube"></i> 3 â€” Live preview</h2><span class="step">Step 3</span></div>
+        <div class="pvbox"><span class="tag">2D FLAT â€” exact pixels</span><canvas id="flat-canvas" width="256" height="256"></canvas></div>
+        <div class="pvbox" style="margin-top:12px;min-height:340px"><span class="tag">3D PLAYER + SHIELD</span><canvas id="player3d-canvas" width="480" height="340"></canvas></div>
+        <div class="row" style="margin-top:10px">
+          <div><label>Minecraft username <small>player skin</small></label><input id="pv-name" value="Steve" maxlength="16" oninput="reloadPlayerSkin()"></div>
+          <div><label>Shield size</label><input id="pv-shsize" type="range" min="0.6" max="1.6" step="0.05" value="1" oninput="tuneShield()"></div>
+        </div>
+        <div class="row" style="margin-top:4px">
+          <div><label>Shield up / down</label><input id="pv-shy" type="range" min="-6" max="6" step="0.5" value="0" oninput="tuneShield()"></div>
+          <div><label>Shield in / out</label><input id="pv-shx" type="range" min="-3" max="3" step="0.25" value="0" oninput="tuneShield()"></div>
+        </div>
+        <div id="pv-status" class="hint">Loading 3D engineâ€¦</div>
+      </div>
+
+      <!-- DEPLOY -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-head"><h2><i class="fa-solid fa-rocket"></i> 4 â€” Deploy</h2><span class="step">Step 4</span></div>
+        <label>GitHub PAT <small>Contents:write for Soul-Capes</small></label>
+        <div style="display:flex;gap:8px">
+          <input id="gh-token" type="password" placeholder="github_pat_... or ghp_...">
+          <button class="btn btn-ghost" onclick="toggleToken()" style="padding:11px 14px"><i class="fa-solid fa-eye" id="token-eye"></i></button>
+        </div>
+        <div class="hint">Stored in <code>localStorage</code> only (shared with cape-builder).</div>
+        <div class="row">
+          <div><label>Repo (shields)</label><input id="gh-repo" value="SoulTeam26/Cosmetics"></div>
+          <div><label>Branch</label><input id="gh-branch" value="main"></div>
+        </div>
+        <div class="row">
+          <div><label>Post-Images repo (preview)</label><input id="post-repo" value="SoulTeams/Post-Images"></div>
+          <div><label>Auto-upload preview?</label><label class="toggle"><input type="checkbox" id="auto-post" checked><span class="small">Yes</span></label></div>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="btn-gh" onclick="pushGithub()" disabled><i class="fa-brands fa-github"></i> Push to GitHub</button>
+          <button class="btn btn-ghost" onclick="checkGithub()"><i class="fa-solid fa-magnifying-glass"></i> Check exists</button>
+        </div>
+        <div class="progress hidden" id="gh-progress"><i id="gh-progress-bar"></i></div>
+        <div id="gh-log" class="log">GitHub log â€” paint something first.</div>
+        <div id="gh-links" class="hint" style="margin-top:8px"></div>
+        <div class="divider"></div>
+        <label>Firebase RTDB <small>open rules</small></label>
+        <div class="row">
+          <div><label>Firebase base</label><input id="fb-base" value="https://soul-backend-default-rtdb.firebaseio.com"></div>
+          <div><label>Coins <small>optional</small></label><input id="sh-coins" placeholder="null or number"></div>
+        </div>
+        <div class="divider"></div>
+        <label>Soul Coins <small>publish gate</small></label>
+        <p class="hint" style="margin-top:0">Publishing to the catalog costs <b class="mono" id="bldr-cost" style="color:var(--ok)">250</b> Soul Coins, charged to your Soul account wallet after a successful push. The <b class="mono">Coins</b> field is the store selling price users pay.</p>
+        <div id="bldr-acct" style="font-size:13px"></div>
+        <label>Payload preview</label>
+        <div id="fb-preview" class="log" style="min-height:120px">Fill details to see payload.</div>
+        <div class="toolbar">
+          <button class="btn btn-ok" id="btn-fb" onclick="pushFirebase()" disabled><i class="fa-solid fa-fire"></i> Push to Firebase</button>
+          <button class="btn btn-ghost" onclick="checkFirebase()"><i class="fa-solid fa-cloud-arrow-down"></i> Check catalog</button>
+        </div>
+        <div id="fb-log" class="log">Firebase log.</div>
+        <div id="fb-links" class="hint"></div>
+        <div class="divider"></div>
+        <div class="toolbar">
+          <button class="btn btn-warn" id="btn-all" onclick="deployAll()" disabled><i class="fa-solid fa-bolt"></i> One-click: GitHub + Firebase</button>
+          <button class="btn btn-ghost" id="btn-zip" onclick="downloadZip()" disabled><i class="fa-solid fa-file-zipper"></i> Download ZIP</button>
+          <button class="btn" onclick="deleteShield()" style="background:var(--err);border-color:var(--err);color:#fff"><i class="fa-solid fa-trash"></i> Delete shield</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-head"><h2><i class="fa-solid fa-list-check"></i> Live catalog</h2><button class="btn btn-ghost sm" onclick="loadCatalog()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button></div>
+        <div id="catalog-list" class="log" style="max-height:220px">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CROP MODAL: pick which part of the uploaded image goes into the region -->
+<div id="crop-overlay" class="hidden" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--paper-dim);border:3px solid var(--ink);padding:18px;max-width:94vw;max-height:94vh;overflow:auto">
+    <div style="font-family:'JetBrains Mono',monospace;font-weight:700;margin-bottom:6px">SELECT IMAGE PART <span id="crop-which" class="small"></span></div>
+    <div id="crop-stage" style="position:relative;display:inline-block;max-width:82vw">
+      <img id="crop-img" style="max-width:82vw;max-height:60vh;display:block;user-select:none;-webkit-user-drag:none" draggable="false">
+      <div id="crop-rect" style="position:absolute;border:2px solid var(--bolt);background:rgba(48,176,255,.12);box-shadow:0 0 0 9999px rgba(0,0,0,.55);cursor:move;touch-action:none">
+        <div id="crop-handle" style="position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;background:var(--bolt);border:2px solid var(--ink);cursor:nwse-resize;touch-action:none"></div>
+      </div>
+    </div>
+    <div class="hint">Drag box to move Â· drag corner to resize (aspect locked to region) Â· dimmed part is skipped</div>
+    <div class="toolbar">
+      <button class="btn btn-ok" id="crop-apply"><i class="fa-solid fa-check"></i> Apply</button>
+      <button class="btn btn-ghost" id="crop-cancel"><i class="fa-solid fa-forward"></i> Skip image</button>
+    </div>
+  </div>
+</div>
+<script>
+// ================= template + regions (measured from vanilla shield_base_nopattern.png 64x64) =================
+const TEMPLATE_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAOVBMVEUAAABucHd4eYGRk5ujpKqFaT51WjBmTSdaRSNVPx1PORkAAAB3b2l6cmt6c2t3cGlEREtXV15lZm3/ybjhAAAAAXRSTlMAQObYZgAAARBJREFUeNrt1LGu00AARNEzGxOng/D/30ioQHqyMxQQuTJyqtf4bDHdFlerjYvN06bAHQ/7posA6PjqIdG6+wHi/4YkGf8Ov27zPF2vt/m3YwZGIpLBo5Soh0NG+XIR3AIYT8cNrNHEx98p0ABty74JXYeyAiSEb4mW5rs2HrsXqBDQBKnKB67htbsNALFpCGy7Y2CaoHNUIMRBg6whLIEIiEK9dsekulxC1lEIMPQaLa+1HxEURIV4+umIEUQJmzpq0OlCmYNC0bdeYtElIN4y0IWwPoUmiHC8AQi8b0IFaBpvGup2AXMoIkiPN/gIYgm8V4BBukKfK/cA5H64wVJAcNs+1dPpdDqdTqfT6RP9AQX6ZqYfeBLEAAAAAElFTkSuQmCC';
+const BASE = 64;
+let RS = 1, TW = 64, TH = 64; // working resolution (RS=1 vanilla, 2/4 = HD; game UVs are normalized so HD works)
+// Vanilla ShieldEntityModel: plate cuboid 12x22x1 at uv(0,0) -> front face x1..12, back face x13..24.
+// Measured pixels: true wood is x2..11 / x14..23, y2..21 â€” the 1px ring + x12..13 divider are rim shading.
+// Handle cuboid 2x6x6 at uv(26,0) -> band x26..41 y6..11, grip x32..35 y0..5.
+// masks are defined in 64-space, mapped to working res (each base px = RSxRS block)
+function bxy(x, y) { return [Math.floor(x / RS), Math.floor(y / RS)]; }
+function inFront(x, y) { const b = bxy(x, y); return b[0] >= 2 && b[0] <= 11 && b[1] >= 2 && b[1] <= 21; }
+function inBack(x, y) { const b = bxy(x, y); return b[0] >= 15 && b[0] <= 24 && b[1] >= 2 && b[1] <= 21; }
+function inPlate(x, y) { const b = bxy(x, y); return b[0] >= 0 && b[0] <= 25 && b[1] >= 0 && b[1] <= 22; }
+function inRim(x, y) {
+  const b = bxy(x, y), bx = b[0], by = b[1];
+  if (bx >= 0 && bx <= 25 && (by === 0 || by === 22)) return true;
+  if ((bx === 0 || bx === 25) && by >= 0 && by <= 22) return true;
+  if (bx >= 26 && bx <= 41 && by >= 6 && by <= 11) return true;
+  // inner rim ring + center divider (measured shading, not wood)
+  if (inPlate(x, y) && !inFront(x, y) && !inBack(x, y)) return true;
+  return false;
+}
+function inHandle(x, y) { const b = bxy(x, y); return b[0] >= 32 && b[0] <= 35 && b[1] >= 0 && b[1] <= 5; }
+// ================= state =================
+const $ = s => document.querySelector(s);
+const LS_TOKEN = 'soul_gh_token';
+const shState = { frames: [], cur: 0, tool: 'brush', region: 'front', dirty3d: true, spin: true };
+let tplAlpha = null; // Uint8 64x64 alpha of vanilla template
+function slugify(s){ return (s||'').toLowerCase().trim().replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,''); }
+function setProgress(sel, pct, show){ const w=$(sel); if(!w) return; if(show) w.classList.remove('hidden'); const b=w.querySelector('i'); if(b) b.style.width = pct+'%'; if(pct>=100) setTimeout(()=>w.classList.add('hidden'),700); }
+function regionMask(r){ return r === 'back' ? inBack : (r === 'rim' ? inRim : (r === 'handle' ? inHandle : inFront)); }
+function designTarget(){ return shState.region; }
+function curCanvas(){ return shState.frames[shState.cur] ? shState.frames[shState.cur].c : null; }
+function touchCur(){ const f = shState.frames[shState.cur]; if (f) f.touched = true; }
+function markDirty(){ shState.dirty3d = true; renderEditor(); renderFlat(); refreshFramesStrip(); updateButtons(); }
+
+function newBlankFrame() {
+  const c = document.createElement('canvas'); c.width = TW; c.height = TH;
+  return c;
+}
+// draw template onto frame (used for new frames + reset)
+const tplImg = new Image();
+let tplReady = false;
+tplImg.onload = () => {
+  tplReady = true;
+  // capture alpha map
+  const t = document.createElement('canvas'); t.width = TW; t.height = TH;
+  const tx = t.getContext('2d', { willReadFrequently: true });
+  tx.drawImage(tplImg, 0, 0);
+  const d = tx.getImageData(0, 0, TW, TH).data;
+  tplAlpha = new Uint8Array(TW * TH);
+  for (let i = 0; i < TW * TH; i++) tplAlpha[i] = d[i * 4 + 3];
+  if (shState.frames.length === 0) { const c = newBlankFrame(); const bx = c.getContext('2d'); bx.imageSmoothingEnabled = false; bx.drawImage(tplImg, 0, 0, TW, TH); shState.frames.push({ c }); }
+  markDirty();
+};
+tplImg.src = 'data:image/png;base64,' + TEMPLATE_B64;
+
+function maskOk(r, x, y) {
+  if (x < 0 || y < 0 || x >= TW || y >= TH) return false;
+  if (!regionMask(r)(x, y)) return false;
+  if (tplAlpha) { const b = bxy(x, y); if (tplAlpha[b[1] * BASE + b[0]] === 0) return false; }
+  return true;
+}
+// ================= editor rendering =================
+const edC = $('#ed-canvas'), edX = edC.getContext('2d');
+let hoverCell = null;
+function renderEditor() {
+  const c = curCanvas();
+  edX.imageSmoothingEnabled = false;
+  edX.clearRect(0, 0, edC.width, edC.height);
+  if (c) edX.drawImage(c, 0, 0, edC.width, edC.height);
+  if (overlayOn && overlayCanvas) edX.drawImage(overlayCanvas, 0, 0, edC.width, edC.height);
+  // hover region highlight
+  if (hoverCell) {
+    const s = edC.width / TW;
+    edX.fillStyle = 'rgba(48,176,255,0.25)';
+    for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+      if (maskOk(shState.region, x, y)) edX.fillRect(x * s, y * s, s, s);
+    }
+    edX.strokeStyle = '#30b0ff'; edX.lineWidth = 2;
+    edX.strokeRect(hoverCell.x * s, hoverCell.y * s, s, s);
+  }
+}
+function edCell(e) {
+  const r = edC.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left) / r.width * TW);
+  const y = Math.floor((e.clientY - r.top) / r.height * TH);
+  return { x, y };
+}
+function hexRGB(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+let painting = false;
+edC.addEventListener('pointerdown', e => { painting = true; edC.setPointerCapture(e.pointerId); paintAt(e); });
+edC.addEventListener('pointermove', e => {
+  const cell = edCell(e);
+  hoverCell = (cell.x >= 0 && cell.y >= 0 && cell.x < TW && cell.y < TH) ? cell : null;
+  if (painting && (shState.tool === 'brush' || shState.tool === 'eraser')) paintAt(e);
+  else renderEditor();
+});
+edC.addEventListener('pointerup', () => { painting = false; markDirty(); });
+edC.addEventListener('pointerleave', () => { hoverCell = null; painting = false; renderEditor(); });
+function paintAt(e) {
+  const c = curCanvas(); if (!c) return;
+  const { x, y } = edCell(e);
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  const size = Math.max(1, Math.min(32, parseInt($('#ed-size').value) || 1));
+  if (shState.tool === 'fill') { fillRegion(); return; }
+  const [r, g, b] = hexRGB($('#ed-color').value);
+  const img = ctx.getImageData(0, 0, TW, TH), d = img.data;
+  for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) {
+    const px = x + dx, py = y + dy;
+    if (px < 0 || py < 0 || px >= TW || py >= TH) continue;
+    const i = (py * TW + px) * 4;
+    if (shState.tool === 'eraser') { d[i + 3] = 0; }
+    else { d[i] = r; d[i + 1] = g; d[i + 2] = b; if (d[i + 3] === 0) d[i + 3] = 255; }
+  }
+  ctx.putImageData(img, 0, 0);
+  touchCur();
+  renderEditor(); renderFlat(); shState.dirty3d = true;
+}
+let overlayOn = false, overlayCanvas = null;
+function buildOverlay() {
+  overlayCanvas = document.createElement('canvas');
+  overlayCanvas.width = TW; overlayCanvas.height = TH;
+  const x = overlayCanvas.getContext('2d');
+  const img = x.createImageData(TW, TH), d = img.data;
+  const cols = { front: [48, 176, 255, 90], back: [34, 197, 94, 90], rim: [255, 177, 59, 115], handle: [200, 100, 255, 115] };
+  for (let yy = 0; yy < TH; yy++) for (let xx = 0; xx < TW; xx++) {
+    let col = null;
+    if (inFront(xx, yy)) col = cols.front;
+    else if (inBack(xx, yy)) col = cols.back;
+    else if (inRim(xx, yy)) col = cols.rim;
+    else if (inHandle(xx, yy)) col = cols.handle;
+    if (!col) continue;
+    const i = (yy * TW + xx) * 4;
+    d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = col[3];
+  }
+  x.putImageData(img, 0, 0);
+}
+function toggleOverlay() {
+  overlayOn = !overlayOn;
+  $('#overlay-label').textContent = overlayOn ? 'ON' : 'OFF';
+  if (overlayOn) buildOverlay();
+  renderEditor();
+}
+function resetRegion() {
+  if (!tplReady) { alert('Template not loaded yet'); return; }
+  const c = curCanvas(); if (!c) return;
+  const t = document.createElement('canvas'); t.width = TW; t.height = TH;
+  const tx = t.getContext('2d');
+  tx.imageSmoothingEnabled = false;
+  tx.drawImage(tplImg, 0, 0, TW, TH);
+  const td = tx.getImageData(0, 0, TW, TH).data;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  const img = ctx.getImageData(0, 0, TW, TH), d = img.data;
+  const mf = regionMask(shState.region);
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+    if (!mf(x, y)) continue;
+    const i = (y * TW + x) * 4;
+    d[i] = td[i]; d[i + 1] = td[i + 1]; d[i + 2] = td[i + 2]; d[i + 3] = td[i + 3];
+  }
+  ctx.putImageData(img, 0, 0);
+  const f = shState.frames[shState.cur];
+  if (f) { f.src = null; f.touched = false; }
+  markDirty();
+}
+function fillRegion() {
+  const c = curCanvas(); if (!c) return;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  const [r, g, b] = hexRGB($('#ed-color').value);
+  const img = ctx.getImageData(0, 0, TW, TH), d = img.data;
+  let n = 0;
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+    if (!maskOk(shState.region, x, y)) continue;
+    const i = (y * TW + x) * 4;
+    if (d[i + 3] === 0) continue;
+    d[i] = r; d[i + 1] = g; d[i + 2] = b; n++;
+  }
+  ctx.putImageData(img, 0, 0);
+  touchCur();
+  markDirty();
+}
+function clearRegion() {
+  const c = curCanvas(); if (!c) return;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  const img = ctx.getImageData(0, 0, TW, TH), d = img.data;
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+    if (!maskOk(shState.region, x, y)) continue;
+    d[(y * TW + x) * 4 + 3] = 0;
+  }
+  ctx.putImageData(img, 0, 0);
+  touchCur();
+  markDirty();
+}
+function resetFrame() {
+  if (!tplReady) { alert('Template not loaded yet'); return; }
+  const c = curCanvas(); if (!c) return;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, TW, TH);
+  ctx.drawImage(tplImg, 0, 0, TW, TH);
+  const f = shState.frames[shState.cur];
+  if (f) { f.src = null; f.touched = false; }
+  markDirty();
+}
+// upload image -> front or back design area (cover fit, everything else untouched)
+function designBox(which) {
+  return designBoxes(which)[0];
+}
+// rim is disjoint (plate ring + edge band) -> one fit per sub-box so content lands on both
+function designBoxes(which) {
+  if (which === 'back') return [{ x: 15 * RS, y: 2 * RS, w: 10 * RS, h: 20 * RS }];
+  if (which === 'rim') return [{ x: 0, y: 0, w: 26 * RS, h: 23 * RS }, { x: 26 * RS, y: 6 * RS, w: 16 * RS, h: 6 * RS }];
+  if (which === 'handle') return [{ x: 32 * RS, y: 0, w: 4 * RS, h: 6 * RS }];
+  return [{ x: 2 * RS, y: 2 * RS, w: 10 * RS, h: 20 * RS }];
+}
+function compositeIntoDesign(img, targetCtx, which, crop) {
+  // cover-fit design bbox (or custom crop if user picked a part), masked to that region only
+  const boxes = designBoxes(which);
+  const maskFn = which === 'back' ? inBack : (which === 'rim' ? inRim : (which === 'handle' ? inHandle : inFront));
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  const t = document.createElement('canvas'); t.width = TW; t.height = TH;
+  const tx = t.getContext('2d', { willReadFrequently: true });
+  tx.drawImage(targetCtx.canvas, 0, 0);
+  tx.save();
+  for (const bb of boxes) {
+    if (crop && crop.sw > 0 && crop.sh > 0) {
+      // custom part: cover the box with the picked crop rect
+      const s = Math.max(bb.w / crop.sw, bb.h / crop.sh);
+      const dw = crop.sw * s, dh = crop.sh * s;
+      const dx = bb.x + (bb.w - dw) / 2, dy = bb.y + (bb.h - dh) / 2;
+      // clip sampling to the crop rect (cover may ask for pixels outside it)
+      tx.save();
+      tx.beginPath();
+      tx.rect(bb.x - 1, bb.y - 1, bb.w + 2, bb.h + 2);
+      tx.clip();
+      tx.drawImage(img, crop.sx, crop.sy, crop.sw, crop.sh, dx, dy, dw, dh);
+      tx.restore();
+    } else {
+      const s = Math.max(bb.w / iw, bb.h / ih);
+      const dw = iw * s, dh = ih * s, dx = bb.x + (bb.w - dw) / 2, dy = bb.y + (bb.h - dh) / 2;
+      tx.drawImage(img, dx, dy, dw, dh);
+    }
+  }
+  tx.restore();
+  const img2 = tx.getImageData(0, 0, TW, TH), d = img2.data;
+  const base = targetCtx.getImageData(0, 0, TW, TH).data;
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+    const i = (y * TW + x) * 4;
+    if (maskFn(x, y)) {
+      // keep uploaded pixel only where template had alpha
+      if (base[i + 3] === 0) { d[i + 3] = 0; }
+    } else {
+      d[i] = base[i]; d[i + 1] = base[i + 1]; d[i + 2] = base[i + 2]; d[i + 3] = base[i + 3];
+    }
+  }
+  targetCtx.putImageData(img2, 0, 0);
+}
+function handleImageFiles(files) {
+  const list = [...files].filter(f => f.type.startsWith('image/'));
+  if (!list.length) { alert('No images'); return; }
+  if (cropQ.length === 0 && !cropState) cropBatchFirst = true;
+  $('#img-info').textContent = `Queued ${list.length} image(s) â€” pick a part for eachâ€¦`;
+  list.forEach(file => {
+    const rd = new FileReader();
+    rd.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        cropQ.push({ file, img, target: designTarget() });
+        if (!cropState) nextCrop();
+      };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  });
+}
+// ---- crop queue: one modal per image, in order ----
+const cropQ = [];
+let cropState = null, cropBatchFirst = true, cropDrag = null;
+function nextCrop() {
+  const job = cropQ[0];
+  if (!job) { $('#crop-overlay').classList.add('hidden'); cropState = null; return; }
+  const boxes = designBoxes(job.target);
+  const aspect = boxes[0].w / boxes[0].h;
+  $('#crop-overlay').classList.remove('hidden');
+  $('#crop-which').textContent = 'â†’ ' + job.target + ' (' + job.file.name + ', ' + (cropQ.length - 1) + ' more in queue)';
+  const im = $('#crop-img');
+  im.src = job.img.src;
+  im.onload = () => {
+    requestAnimationFrame(() => {
+      const r = im.getBoundingClientRect();
+      const W = r.width, H = r.height;
+      if (!W || !H) { setTimeout(nextCrop, 100); return; }
+      let w = W, h = w / aspect;
+      if (h > H) { h = H; w = h * aspect; }
+      cropState = { job, W, H, aspectFix: aspect, scale: job.img.naturalWidth / W, rect: { x: (W - w) / 2, y: (H - h) / 2, w, h } };
+      drawCropRect();
+    });
+  };
+}
+function drawCropRect() {
+  if (!cropState) return;
+  const el = $('#crop-rect'), r = cropState.rect;
+  el.style.left = r.x + 'px'; el.style.top = r.y + 'px';
+  el.style.width = r.w + 'px'; el.style.height = r.h + 'px';
+}
+function cropClamp(r, W, H) {
+  r.w = Math.max(24, Math.min(r.w, W));
+  r.h = r.w / cropState.aspectFix;
+  if (r.h > H) { r.h = H; r.w = r.h * cropState.aspectFix; }
+  r.x = Math.max(0, Math.min(r.x, W - r.w));
+  r.y = Math.max(0, Math.min(r.y, H - r.h));
+  return r;
+}
+document.getElementById('crop-rect').addEventListener('pointerdown', e => {
+  if (!cropState) return;
+  cropDrag = { mode: 'move', sx: e.clientX, sy: e.clientY, r: { ...cropState.rect } };
+  e.currentTarget.setPointerCapture(e.pointerId);
+});
+document.getElementById('crop-handle').addEventListener('pointerdown', e => {
+  if (!cropState) return;
+  e.stopPropagation();
+  cropDrag = { mode: 'size', sx: e.clientX, sy: e.clientY, r: { ...cropState.rect } };
+  e.currentTarget.setPointerCapture(e.pointerId);
+});
+window.addEventListener('pointermove', e => {
+  if (!cropDrag || !cropState) return;
+  const dx = e.clientX - cropDrag.sx, dy = e.clientY - cropDrag.sy;
+  const r = { ...cropDrag.r };
+  if (cropDrag.mode === 'move') { r.x += dx; r.y += dy; }
+  else { r.w += dx; }
+  cropState.rect = cropClamp(r, cropState.W, cropState.H);
+  drawCropRect();
+});
+window.addEventListener('pointerup', () => { cropDrag = null; });
+document.getElementById('crop-apply').onclick = () => {
+  const st = cropState;
+  if (!st) return;
+  const sc = st.scale;
+  const crop = { sx: st.rect.x * sc, sy: st.rect.y * sc, sw: st.rect.w * sc, sh: st.rect.h * sc };
+  // clamp crop inside the real image
+  crop.sx = Math.max(0, Math.min(crop.sx, st.job.img.naturalWidth - 1));
+  crop.sy = Math.max(0, Math.min(crop.sy, st.job.img.naturalHeight - 1));
+  crop.sw = Math.max(1, Math.min(crop.sw, st.job.img.naturalWidth - crop.sx));
+  crop.sh = Math.max(1, Math.min(crop.sh, st.job.img.naturalHeight - crop.sy));
+  applyCropJob(st.job, crop);
+  cropQ.shift();
+  nextCrop();
+};
+document.getElementById('crop-cancel').onclick = () => {
+  cropQ.shift();
+  if (!cropQ.length) cropBatchFirst = true;
+  nextCrop();
+};
+function applyCropJob(job, crop) {
+  const anim = $('#sh-animated').checked;
+  let ctx, fr;
+  if (anim && !cropBatchFirst) {
+    const c = newBlankFrame();
+    const bx = c.getContext('2d');
+    if (tplReady) { bx.imageSmoothingEnabled = false; bx.drawImage(tplImg, 0, 0, TW, TH); }
+    fr = { c, src: null, touched: false };
+    shState.frames.push(fr);
+    shState.cur = shState.frames.length - 1;
+    ctx = bx;
+  } else {
+    const c = curCanvas();
+    if (!c) return;
+    ctx = c.getContext('2d', { willReadFrequently: true });
+    fr = shState.frames[shState.cur];
+  }
+  cropBatchFirst = false;
+  compositeIntoDesign(job.img, ctx, job.target, crop);
+  if (fr) { fr.src = { img: job.img, target: job.target, crop }; fr.touched = false; }
+  $('#img-info').textContent = `${job.file.name} -> ${job.target} (custom part)`;
+  markDirty(); renderFlat(); updateButtons();
+}
+function onSheetSelected(e) {
+  const files = [...e.target.files].filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+  e.target.value = '';
+  const anim = $('#sh-animated').checked;
+  let first = true;
+  $('#img-info').textContent = `Loading ${files.length} sheet(s)...`;
+  files.forEach(file => {
+    const rd = new FileReader();
+    rd.onload = () => {
+      loadImageEl(rd.result).then(img => {
+        const c = (anim && !first) ? newBlankFrame() : curCanvas();
+        if (!c) return;
+        if (anim && !first) { shState.frames.push({ c, src: null, touched: true }); shState.cur = shState.frames.length - 1; }
+        else { const f = shState.frames[shState.cur]; if (f) { f.src = null; f.touched = true; } }
+        const x = c.getContext('2d');
+        x.imageSmoothingEnabled = false;
+        x.clearRect(0, 0, TW, TH);
+        x.drawImage(img, 0, 0, TW, TH);
+        first = false;
+        $('#img-info').textContent = `Sheet loaded: ${file.name} (${img.naturalWidth}Ã—${img.naturalHeight} â†’ ${TW}Ã—${TH})`;
+        markDirty(); renderFlat(); updateButtons();
+      }).catch(() => { $('#img-info').textContent = 'Sheet decode failed: ' + file.name; });
+    };
+    rd.readAsDataURL(file);
+  });
+}
+function onImagesSelected(e){ if (e.target.files.length) handleImageFiles(e.target.files); }
+function onDropImage(e){ e.preventDefault(); e.currentTarget.classList.remove('dragover'); if (e.dataTransfer.files.length) handleImageFiles(e.dataTransfer.files); }
+// ================= load existing shield back into the editor =================
+function b64ToDataURL(b64) {
+  return 'data:image/png;base64,' + String(b64 || '').replace(/\s+/g, '');
+}
+function loadImageEl(dataUrl) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = () => rej(new Error('image decode failed'));
+    img.src = dataUrl;
+  });
+}
+function paintFullFrame(img) {
+  // exact pixels (no masking) so re-editing is lossless at working res
+  const c = newBlankFrame();
+  const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
+  x.clearRect(0, 0, TW, TH);
+  x.drawImage(img, 0, 0, TW, TH);
+  return c;
+}
+async function loadShield() {
+  const id = slugify($('#load-id').value || $('#sh-id').value);
+  if (!id) { alert('Shield ID required'); return; }
+  const token = $('#gh-token').value.trim();
+  if (!token) { alert('Paste GitHub PAT first (Deploy section) â€” repo is private'); return; }
+  const repo = $('#gh-repo').value.trim() || 'SoulTeam26/Cosmetics';
+  const branch = $('#gh-branch').value.trim() || 'main';
+  $('#load-info').textContent = `Loading ${id} from ${repo}...`;
+  try {
+    // 1. try static file
+    let files = [];
+    const one = await ghApi('GET', `/repos/${repo}/contents/shields/${id}.png?ref=${branch}`, token);
+    if (one.status === 200 && one.data && one.data.content) {
+      files = [{ name: `${id}.png`, b64: one.data.content }];
+    } else {
+      // 2. try animated folder
+      const dir = await ghApi('GET', `/repos/${repo}/contents/shields/${id}?ref=${branch}`, token);
+      if (dir.status !== 200 || !Array.isArray(dir.data)) {
+        $('#load-info').textContent = `Not found: shields/${id}.png nor shields/${id}/ (status ${dir.status})`;
+        return;
+      }
+      files = dir.data
+        .filter(e => e && e.type === 'file' && /\.png$/i.test(e.name || ''))
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      // contents listing has no file bodies â€” fetch each (cap 60)
+      const capped = files.slice(0, 60);
+      const bodies = [];
+      for (const f of capped) {
+        const g = await ghApi('GET', `/repos/${repo}/contents/${encodeURIComponent(f.path).replace(/%2F/g, '/')}?ref=${branch}`, token);
+        if (g.status === 200 && g.data && g.data.content) bodies.push({ name: f.name, b64: g.data.content });
+        $('#load-info').textContent = `Loading frames... ${bodies.length}/${capped.length}`;
+      }
+      files = bodies;
+    }
+    if (!files.length) { $('#load-info').textContent = 'No PNG files found.'; return; }
+    shState.frames = [];
+    for (const f of files) {
+      const img = await loadImageEl(b64ToDataURL(f.b64));
+      shState.frames.push({ c: paintFullFrame(img), src: null, touched: true });
+    }
+    shState.cur = 0;
+    $('#sh-id').value = id;
+    $('#sh-id').dataset.touched = '1';
+    const isAnim = shState.frames.length > 1;
+    if ($('#sh-animated').checked !== isAnim) { $('#sh-animated').checked = isAnim; onAnimatedToggle(); }
+    // 3. Firebase details (name/price/free/icon)
+    try {
+      const base = ($('#fb-base').value.trim().replace(/\/$/, '')) || 'https://soul-backend-default-rtdb.firebaseio.com';
+      const r = await fetch(`${base}/capes/catalog/${id}.json`);
+      const item = await r.json();
+      if (item) {
+        if (item.name) $('#sh-name').value = item.name;
+        if (item.price !== undefined) $('#sh-price').value = item.price;
+        if (typeof item.free === 'boolean') $('#sh-free').checked = item.free;
+        if (item.icon) $('#sh-icon').value = item.icon;
+        if (item.frameDelayMs) $('#frame-delay').value = item.frameDelayMs;
+      }
+    } catch (_) {}
+    onIdInput();
+    markDirty();
+    $('#load-info').textContent = `Loaded ${files.length} frame(s) for "${id}" â€” paint away.`;
+  } catch (e) {
+    $('#load-info').textContent = 'Load error: ' + e;
+  }
+}
+// ================= frames =================
+function frameDataURL(i) { return shState.frames[i].c.toDataURL('image/png'); }
+function refreshFramesStrip() {
+  const el = $('#frames-strip');
+  $('#frames-count-label').textContent = String(shState.frames.length);
+  if (!shState.frames.length) { el.innerHTML = '<span class="ph">No frames</span>'; return; }
+  el.innerHTML = '';
+  shState.frames.forEach((f, i) => {
+    const img = document.createElement('img');
+    img.src = f.c.toDataURL('image/png');
+    img.title = 'frame ' + i;
+    if (i === shState.cur) img.classList.add('sel');
+    img.onclick = () => { shState.cur = i; markDirty(); };
+    el.appendChild(img);
+  });
+}
+function addFrame() {
+  const src = curCanvas(); if (!src) return;
+  const f0 = shState.frames[shState.cur] || {};
+  const c = newBlankFrame();
+  c.getContext('2d').drawImage(src, 0, 0);
+  shState.frames.push({ c, src: f0.src || null, touched: !!f0.touched });
+  shState.cur = shState.frames.length - 1;
+  markDirty();
+}
+function deleteFrame() {
+  if (shState.frames.length <= 1) { alert('Keep at least 1 frame'); return; }
+  shState.frames.splice(shState.cur, 1);
+  shState.cur = Math.max(0, shState.cur - 1);
+  markDirty();
+}
+// ================= flat + 3D preview =================
+const flatC = $('#flat-canvas'), flatX = flatC.getContext('2d');
+function renderFlat() {
+  flatX.imageSmoothingEnabled = false;
+  flatX.clearRect(0, 0, flatC.width, flatC.height);
+  const c = curCanvas();
+  if (c) flatX.drawImage(c, 0, 0, flatC.width, flatC.height);
+}
+// --- skinview3d player ---
+const SOUL_3D_URLS = [
+  'https://cdn.jsdelivr.net/npm/skinview3d@3.0.1/bundles/skinview3d.bundle.js',
+  'https://unpkg.com/skinview3d@3.0.1/bundles/skinview3d.bundle.js'
+];
+let __svLib = null;
+function ensureSV() {
+  if (window.skinview3d) return Promise.resolve(window.skinview3d);
+  if (__svLib) return __svLib;
+  __svLib = (function next(i) {
+    if (i >= SOUL_3D_URLS.length) return Promise.reject(new Error('3D CDN unreachable'));
+    return new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = SOUL_3D_URLS[i]; s.async = true;
+      s.onload = () => (window.skinview3d ? res(window.skinview3d) : rej(new Error('bad bundle')));
+      s.onerror = () => rej(new Error('cdn fail'));
+      document.head.appendChild(s);
+    }).catch(() => next(i + 1));
+  })(0);
+  return __svLib;
+}
+let pvViewer = null;
+function shStatus(m) {
+  try { const el = $('#pv-status'); el.textContent = (el.textContent + ' ' + m).slice(-240); } catch (_) {}
+}
+async function initPlayer3D() {
+  try {
+    const sv = await ensureSV();
+    const canvas = $('#player3d-canvas');
+    pvViewer = new sv.SkinViewer({ canvas, width: 480, height: 340, preserveDrawingBuffer: false });
+    try { pvViewer.autoRotate = true; pvViewer.autoRotateSpeed = 0.8; } catch (_) {}
+    try {
+      if (pvViewer.animations && sv.WalkingAnimation) { const a = pvViewer.animations.add(sv.WalkingAnimation); if (a) a.speed = 0.5; }
+      else if (sv.WalkingAnimation) pvViewer.animation = new sv.WalkingAnimation();
+    } catch (_) {}
+    // await skin so materials/textures exist before attaching the shield
+    try { await pvViewer.loadSkin('https://minotar.net/skin/Steve'); } catch (_) {}
+    $('#pv-status').textContent = '3D player ready â€” shield is on the left arm, updates as you paint. Sliders tune placement.';
+    attachShieldToPlayer();
+    requestAnimationFrame(shieldTexLoop);
+  } catch (e) { $('#pv-status').textContent = '3D player offline (CDN blocked) â€” 2D preview still works.'; }
+}
+function reloadPlayerSkin() {
+  if (!pvViewer) return;
+  const n = ($('#pv-name').value || 'Steve').trim() || 'Steve';
+  try {
+    const r = pvViewer.loadSkin('https://minotar.net/skin/' + encodeURIComponent(n));
+    if (r && r.catch) r.catch(() => {});
+    if (r && r.then) r.then(() => { if (!psh) attachShieldToPlayer(); }).catch(() => {});
+    else setTimeout(() => { if (!psh) attachShieldToPlayer(); }, 1500);
+  } catch (_) {}
+}
+function reloadPlayerSkin() {
+  if (!pvViewer) return;
+  const n = ($('#pv-name').value || 'Steve').trim() || 'Steve';
+  pvViewer.loadSkin('https://minotar.net/skin/' + encodeURIComponent(n)).catch(() => {});
+}
+// --- shield attached to the skinview3d player's left arm ---
+// Constructors are derived from live viewer instances, so this works with
+// whatever THREE revision the skinview3d bundle uses (no separate three.js).
+let psh = null;
+function findLeftArm(root) {
+  try {
+    if (root.skin && root.skin.leftArm) return root.skin.leftArm;
+    if (root.leftArm) return root.leftArm;
+  } catch (_) {}
+  let found = null, anyArm = null;
+  try {
+    root.traverse(o => {
+      if (!o || !o.name) return;
+      if (/leftarm/i.test(o.name)) found = o;
+      else if (!anyArm && /arm/i.test(o.name)) anyArm = o;
+    });
+  } catch (_) {}
+  return found || anyArm;
+}
+function attachShieldToPlayer() {
+  if (!pvViewer || !pvViewer.playerObject || psh) return;
+  const root = pvViewer.playerObject;
+  const arm = findLeftArm(root);
+  if (!arm) { shStatus('Shield: arm not found.'); return; }
+  let BoxGeo = null, MeshCtor = null, baseMat = null, TexCtor = null, NEAREST = null, armH = 12, armW = 4;
+  try {
+    root.traverse(o => {
+      if (o && o.isMesh) {
+        if (!MeshCtor) MeshCtor = o.constructor;
+        if (o.geometry && o.geometry.parameters && o.geometry.parameters.width && !BoxGeo) BoxGeo = o.geometry.constructor;
+        if (o.material && o.material.map) {
+          if (!baseMat) { baseMat = o.material; NEAREST = o.material.map.magFilter; }
+          if (!TexCtor) TexCtor = o.material.map.constructor;
+        }
+      }
+    });
+  } catch (_) {}
+  if (!BoxGeo || !MeshCtor || !baseMat || !TexCtor) { shStatus('Shield: waiting for skin textureâ€¦'); setTimeout(() => { if (!psh) attachShieldToPlayer(); }, 800); return; }
+  // skinview3d uses UNIT boxes + mesh.scale (arm = 1x1x1 scaled to 4x12x4), so include scale
+  try {
+    arm.traverse(o => {
+      if (o && o.isMesh && o.geometry && o.geometry.parameters) {
+        const sx = (o.scale && o.scale.x) || 1, sy = (o.scale && o.scale.y) || 1;
+        const h = (o.geometry.parameters.height || 0) * sy;
+        const w = (o.geometry.parameters.width || 0) * sx;
+        if (h > armH) armH = h;
+        if (w > armW) armW = w;
+      }
+    });
+  } catch (_) {}
+  const outward = (arm.position && arm.position.x < 0) ? -1 : 1;
+  const texCanvasF = document.createElement('canvas'); texCanvasF.width = TW; texCanvasF.height = TH;
+  const texCanvasB = document.createElement('canvas'); texCanvasB.width = TW; texCanvasB.height = TH;
+  const texCanvasR = document.createElement('canvas'); texCanvasR.width = TW; texCanvasR.height = TH;
+  const texCanvasH = document.createElement('canvas'); texCanvasH.width = TW; texCanvasH.height = TH;
+  let texF = null, texB = null, texR = null, texH = null;
+  let faceMat = null, backMat = null, rimMat = null, handleMat = null, darkMat = null, mesh = null;
+  try {
+    texF = new TexCtor(texCanvasF);
+    texB = new TexCtor(texCanvasB);
+    texR = new TexCtor(texCanvasR);
+    texH = new TexCtor(texCanvasH);
+    for (const t of [texF, texB, texR, texH]) {
+      if (NEAREST !== null && NEAREST !== undefined) { t.magFilter = NEAREST; t.minFilter = NEAREST; }
+    }
+    // crop to texture rects (flipY aware): front x2..11, back x15..24 (y2..21),
+    // rim band x26..41 y6..11, handle grip x32..35 y0..5
+    texF.repeat.set(10 / 64, 20 / 64); texF.offset.set(2 / 64, 1 - 22 / 64);
+    texB.repeat.set(10 / 64, 20 / 64); texB.offset.set(15 / 64, 1 - 22 / 64);
+    texR.repeat.set(16 / 64, 6 / 64); texR.offset.set(26 / 64, 1 - 12 / 64);
+    texH.repeat.set(4 / 64, 6 / 64); texH.offset.set(32 / 64, 1 - 6 / 64);
+    faceMat = baseMat.clone();
+    faceMat.map = texF;
+    faceMat.transparent = true;
+    faceMat.needsUpdate = true;
+    backMat = baseMat.clone();
+    backMat.map = texB;
+    backMat.transparent = true;
+    backMat.needsUpdate = true;
+    rimMat = baseMat.clone();
+    rimMat.map = texR;
+    rimMat.transparent = true;
+    rimMat.needsUpdate = true;
+    handleMat = baseMat.clone();
+    handleMat.map = texH;
+    handleMat.transparent = true;
+    handleMat.needsUpdate = true;
+    darkMat = baseMat.clone();
+    if (darkMat.color && darkMat.color.set) darkMat.color.set(0x4a2f1c);
+    darkMat.needsUpdate = true;
+    // plate faces outward (+-x): thickness along X, width across Z; thin edges show rim band
+    const SH_T = 1.4, SH_H = 16, SH_W = 10;
+    const geo = new BoxGeo(SH_T, SH_H, SH_W);
+    const mats = outward >= 0
+      ? [faceMat, backMat, rimMat, rimMat, rimMat, rimMat]
+      : [backMat, faceMat, rimMat, rimMat, rimMat, rimMat];
+    mesh = new MeshCtor(geo, mats);
+    // handle grip behind the plate (inner side)
+    try {
+      const hg = new BoxGeo(2, 8, 3);
+      const hm = new MeshCtor(hg, handleMat);
+      hm.position.set(-outward * (SH_T / 2 + 0.7), 0, 0);
+      mesh.add(hm);
+    } catch (_) {}
+    const bx = outward * (armW / 2 + SH_T / 2 + 0.8), by = -(armH + 2), bz = 0.6;
+    mesh.position.set(bx, by, bz);
+    arm.add(mesh);
+    psh = { mesh, texF, texB, texR, texH, texCanvasF, texCanvasB, texCanvasR, texCanvasH, outward, bx, by, bz, lastFrame: -2 };
+    tuneShield();
+    redrawShieldTex(shState.cur);
+    shStatus('Shield attached to arm.');
+  } catch (e) {
+    $('#pv-status').textContent += ' Shield attach failed.';
+  }
+}
+function tuneShield() {
+  if (!psh || !psh.mesh) return;
+  const s = parseFloat($('#pv-shsize').value) || 1;
+  const dy = parseFloat($('#pv-shy').value) || 0;
+  const dx = parseFloat($('#pv-shx').value) || 0;
+  try {
+    psh.mesh.scale.setScalar(s);
+    psh.mesh.position.set(psh.bx + psh.outward * dx, psh.by + dy, psh.bz);
+  } catch (_) {}
+}
+function setRes(v) {
+  const mult = [1, 2, 4][v - 1] || 1;
+  $('#res-label').textContent = (64 * mult) + 'Ã—' + (64 * mult) + (mult > 1 ? ' (' + mult + 'x HD)' : ' (vanilla)');
+  if (mult === RS) return;
+  const down = mult < RS;
+  RS = mult; TW = 64 * RS; TH = 64 * RS;
+  shState.frames.forEach(f => {
+    const nc = document.createElement('canvas'); nc.width = TW; nc.height = TH;
+    const nx = nc.getContext('2d');
+    if (f.src && f.src.img && !f.touched && tplReady) {
+      // pristine upload: rebuild from template + ORIGINAL image = full sharpness at new size
+      nx.imageSmoothingEnabled = false;
+      nx.drawImage(tplImg, 0, 0, TW, TH);
+      compositeIntoDesign(f.src.img, nx, f.src.target, f.src.crop || null);
+    } else {
+      // painted work: crisp nearest on upscale, smooth only on downscale
+      nx.imageSmoothingEnabled = !!down;
+      nx.imageSmoothingQuality = 'high';
+      nx.drawImage(f.c, 0, 0, TW, TH);
+    }
+    f.c = nc;
+  });
+  edC.width = TW; edC.height = TH;
+  if (overlayOn) buildOverlay();
+  markDirty();
+}
+function redrawShieldTex(frameIdx) {
+  if (!psh || !shState.frames.length) return;
+  const c = shState.frames[Math.min(frameIdx, shState.frames.length - 1)].c;
+  try {
+    for (const tc of [psh.texCanvasF, psh.texCanvasB, psh.texCanvasR, psh.texCanvasH]) {
+      if (tc.width !== TW) { tc.width = TW; tc.height = TH; }
+      const x = tc.getContext('2d');
+      x.clearRect(0, 0, TW, TH);
+      x.drawImage(c, 0, 0);
+    }
+    psh.texF.needsUpdate = true;
+    psh.texB.needsUpdate = true;
+    psh.texR.needsUpdate = true;
+    psh.texH.needsUpdate = true;
+  } catch (_) {}
+}
+function shieldTexLoop() {
+  requestAnimationFrame(shieldTexLoop);
+  if (!psh) return;
+  const anim = $('#sh-animated').checked && shState.frames.length > 1;
+  const delay = Math.max(20, parseInt($('#frame-delay').value) || 100);
+  const idx = anim ? Math.floor(performance.now() / delay) % shState.frames.length : shState.cur;
+  if (idx !== psh.lastFrame || shState.dirty3d) { redrawShieldTex(idx); psh.lastFrame = idx; shState.dirty3d = false; }
+}
+// ================= details =================
+function onNameInput(){
+  const name = $('#sh-name').value;
+  if (!$('#sh-id').dataset.touched) $('#sh-id').value = slugify(name) || 'soul-guard';
+  onIdInput();
+}
+function onIdInput(){
+  $('#sh-id').dataset.touched = '1';
+  const id = slugify($('#sh-id').value) || 'soul-guard';
+  const isAnim = $('#sh-animated').checked;
+  $('#id-hint').innerHTML = isAnim ? `Folder: <code>shields/${id}/</code> â€” <code>${id}_0.png â€¦</code>` : `File: <code>shields/${id}.png</code>`;
+  updateFbPreview(); updateButtons();
+}
+function onAnimatedToggle(){
+  const anim = $('#sh-animated').checked;
+  $('#anim-label').textContent = anim ? 'Animated â€” frame-wise' : 'Static â€” single PNG';
+  $('#anim-fields').style.display = anim ? '' : 'none';
+  $('#frames-expected').textContent = anim ? (shState.frames.length + ' frames (add more below)') : '1 frame (static)';
+  $('#frames-hint').textContent = anim ? 'â€” add one image per frame, or paint each frame' : 'â€” static shield = 1 frame';
+  onIdInput();
+}
+$('#sh-animated').addEventListener('change', onAnimatedToggle);
+// region + tool segs
+document.querySelectorAll('#region-seg button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#region-seg button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); shState.region = b.dataset.r; renderEditor();
+});
+document.querySelectorAll('#tool-seg button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#tool-seg button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); shState.tool = b.dataset.t;
+});
+// token persistence (shared with cape-builder)
+(function initToken(){
+  try {
+    const t = localStorage.getItem(LS_TOKEN);
+    if (t) $('#gh-token').value = t;
+    $('#gh-token').addEventListener('input', () => localStorage.setItem(LS_TOKEN, $('#gh-token').value.trim()));
+  } catch (_) {}
+})();
+
+// Auto-load the team PAT from Firebase config (saved by the owner).
+// Does NOT overwrite a token typed manually in this tab.
+try {
+  firebase.database().ref('config/gh_token').once('value').then(function(s){
+    var dbTok = String(s.val() || '').trim();
+    if (!dbTok) return;
+    var input = $('#gh-token');
+    if (!input.value.trim()) {
+      input.value = dbTok;
+      localStorage.setItem(LS_TOKEN, dbTok);
+      $('#gh-log').textContent += '\n[pat] Team PAT auto-loaded from Firebase config/gh_token.';
+    }
+  }).catch(function(){});
+} catch (_) {}
+function toggleToken(){
+  const i = $('#gh-token'); i.type = i.type === 'password' ? 'text' : 'password';
+  $('#token-eye').className = i.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+}
+// ================= export =================
+function exportFrames() {
+  // -> [{index, dataUrl, base64, size}]
+  return shState.frames.map((f, i) => {
+    const dataUrl = f.c.toDataURL('image/png');
+    const base64 = dataUrl.split(',')[1];
+    return { index: i, dataUrl, base64, size: Math.round(base64.length * 0.75) };
+  });
+}
+function downloadPNG() {
+  const c = curCanvas(); if (!c) return;
+  const id = slugify($('#sh-id').value) || 'soul-guard';
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = `${id}-frame${shState.cur}.png`;
+  a.click();
+}
+async function downloadZip() {
+  const frames = exportFrames();
+  if (!frames.length) { alert('Nothing painted yet'); return; }
+  const id = slugify($('#sh-id').value) || 'soul-guard';
+  const isAnim = $('#sh-animated').checked;
+  const zip = new JSZip();
+  if (isAnim) {
+    const folder = zip.folder(`shields/${id}`);
+    frames.forEach(f => folder.file(`${id}_${f.index}.png`, f.base64, { base64: true }));
+  } else {
+    zip.file(`shields/${id}.png`, frames[0].base64, { base64: true });
+  }
+  const prev = previewDataURL();
+  if (prev) zip.file(`${id}-preview.png`, prev.split(',')[1], { base64: true });
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `${id}-shield-${isAnim ? 'animated' : 'static'}.zip`; a.click();
+  URL.revokeObjectURL(url);
+  $('#gh-log').textContent += `\nZIP downloaded: ${a.download} ${(blob.size / 1024).toFixed(1)}KB`;
+}
+function previewDataURL() {
+  // 512x512 flat of frame 0 for Post-Images
+  if (!shState.frames.length) return null;
+  const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+  const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
+  x.drawImage(shState.frames[0].c, 0, 0, 512, 512);
+  return c.toDataURL('image/png');
+}
+// ================= GitHub =================
+async function ghApi(method, path, token, body) {
+  const url = `https://api.github.com${path}`;
+  const headers = { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'SoulShieldBuilder' };
+  const opts = { method, headers };
+  if (body) { opts.body = JSON.stringify(body); headers['Content-Type'] = 'application/json'; }
+  const r = await fetch(url, opts);
+  const text = await r.text();
+  let data; try { data = JSON.parse(text); } catch { data = text; }
+  return { status: r.status, data, text };
+}
+async function getSha(token, repo, repoPath, branch) {
+  const { status, data } = await ghApi('GET', `/repos/${repo}/contents/${encodeURIComponent(repoPath).replace(/%2F/g, '/')}?ref=${branch}`, token);
+  if (status === 200 && data && data.sha) return data.sha;
+  return null;
+}
+async function pushSingleFile(token, repo, branch, repoPath, base64, message) {
+  const sha = await getSha(token, repo, repoPath, branch);
+  const body = { message, content: base64, branch };
+  if (sha) body.sha = sha;
+  return ghApi('PUT', `/repos/${repo}/contents/${encodeURIComponent(repoPath).replace(/%2F/g, '/')}`, token, body);
+}
+function updateButtons() {
+  const hasFrames = shState.frames.length > 0;
+  const hasId = !!slugify($('#sh-id').value);
+  const hasPrice = $('#sh-price').value !== '';
+  $('#btn-gh').disabled = !hasFrames || !hasId;
+  $('#btn-fb').disabled = !hasFrames || !hasId || !hasPrice;
+  $('#btn-all').disabled = $('#btn-gh').disabled || $('#btn-fb').disabled;
+  $('#btn-zip').disabled = !hasFrames;
+  updateFbPreview();
+}
+async function pushGithub() {
+  const token = $('#gh-token').value.trim();
+  if (!token) { alert('Paste GitHub PAT (Contents:write)'); return; }
+  try { localStorage.setItem(LS_TOKEN, token); } catch (_) {}
+  const repo = $('#gh-repo').value.trim() || 'SoulTeam26/Cosmetics';
+  const branch = $('#gh-branch').value.trim() || 'main';
+  const postRepo = $('#post-repo').value.trim() || 'SoulTeams/Post-Images';
+  const id = slugify($('#sh-id').value); if (!id) { alert('ID required'); return; }
+  const isAnim = $('#sh-animated').checked;
+  const frames = exportFrames();
+  if (!frames.length) { alert('Paint something first'); return; }
+  $('#gh-log').textContent = ''; $('#gh-links').innerHTML = '';
+  setProgress('#gh-progress', 0, false); $('#gh-progress').classList.remove('hidden');
+  let ok = true, success = 0, fail = 0;
+  const repoCheck = await ghApi('GET', `/repos/${repo}`, token);
+  if (repoCheck.status !== 200) { $('#gh-log').textContent += `Repo check failed ${repoCheck.status}: ${repoCheck.text.slice(0, 400)}\n`; ok = false; }
+  else $('#gh-log').textContent += `[ok] ${repo} private=${repoCheck.data.private}\n`;
+  for (let i = 0; i < frames.length; i++) {
+    const f = frames[i];
+    const repoPath = isAnim ? `shields/${id}/${id}_${f.index}.png` : `shields/${id}.png`;
+    const msg = isAnim ? (i === 0 ? `Add ${id} animated shield (${frames.length} frames)` : `Add ${id} shield frame ${f.index}`) : `Add ${id} static shield`;
+    $('#gh-log').textContent += `[create] ${repoPath} ${(f.size / 1024).toFixed(1)}KB\n`;
+    $('#gh-log').scrollTop = $('#gh-log').scrollHeight;
+    const { status, text } = await pushSingleFile(token, repo, branch, repoPath, f.base64, msg);
+    if (status === 200 || status === 201) { $('#gh-log').textContent += ` -> ok ${status}\n`; success++; }
+    else { $('#gh-log').textContent += ` -> FAIL ${status}: ${text.slice(0, 600)}\n`; fail++; ok = false; }
+    setProgress('#gh-progress', Math.round((i + 1) / frames.length * 100), true);
+    await new Promise(r => setTimeout(r, 500));
+    if (!isAnim) break;
+  }
+  const prev = previewDataURL();
+  if ($('#auto-post').checked && prev) {
+    const capName = id.charAt(0).toUpperCase() + id.slice(1).replace(/-/g, '');
+    const previewPath = `${capName}.png`;
+    $('#gh-log').textContent += `[post-images] ${postRepo}/${previewPath}\n`;
+    const { status, text } = await pushSingleFile(token, postRepo, 'main', previewPath, prev.split(',')[1], `Add ${id} shield preview`);
+    if (status === 200 || status === 201) $('#gh-log').textContent += ` -> preview ok ${status}\n`;
+    else $('#gh-log').textContent += ` -> preview FAIL ${status}: ${text.slice(0, 400)}\n`;
+  }
+  $('#gh-log').textContent += `\nDone: ${success}/${frames.length} files, ${fail} failed\n`;
+  if (fail === 0 && success > 0) {
+    $('#gh-links').innerHTML = `Verify: <a href="https://github.com/${repo}/tree/${branch}/shields/${id}" target="_blank" style="color:var(--bolt);text-decoration:underline">github.com/${repo}/tree/${branch}/shields/${id}</a>`;
+    if ($('#auto-post').checked) {
+      const capName = id.charAt(0).toUpperCase() + id.slice(1).replace(/-/g, '');
+      $('#sh-icon').value = `https://raw.githubusercontent.com/${postRepo}/main/${capName}.png`;
+      updateFbPreview();
+    }
+  }
+  setProgress('#gh-progress', 100, true);
+  updateButtons();
+}
+async function checkGithub() {
+  const token = $('#gh-token').value.trim();
+  const repo = $('#gh-repo').value.trim() || 'SoulTeam26/Cosmetics';
+  const id = slugify($('#sh-id').value); if (!id) { alert('ID'); return; }
+  const isAnim = $('#sh-animated').checked;
+  const branch = $('#gh-branch').value.trim() || 'main';
+  const path = isAnim ? `shields/${id}` : `shields/${id}.png`;
+  const headers = token ? { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' } : { 'Accept': 'application/vnd.github.v3+json' };
+  try {
+    const r = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`, { headers });
+    const t = await r.text();
+    $('#gh-log').textContent += `\n[check] GET ${path} -> ${r.status}\n${t.slice(0, 2000)}\n`;
+  } catch (e) { $('#gh-log').textContent += `\n[check] error ${e}\n`; }
+}
+// ================= Firebase =================
+function buildPayload() {
+  const id = slugify($('#sh-id').value) || 'soul-guard';
+  const name = $('#sh-name').value.trim() || id;
+  const price = parseFloat($('#sh-price').value) || 0;
+  const isAnim = $('#sh-animated').checked;
+  const free = $('#sh-free').checked;
+  const frameCount = isAnim ? shState.frames.length : 0;
+  const frameDelay = isAnim ? (parseInt($('#frame-delay').value) || 100) : 0;
+  const icon = $('#sh-icon').value.trim() || `https://raw.githubusercontent.com/SoulTeams/Post-Images/main/${id.charAt(0).toUpperCase() + id.slice(1).replace(/-/g, '')}.png`;
+  const coinsVal = $('#sh-coins').value.trim(); const coins = coinsVal === '' ? null : (isNaN(parseInt(coinsVal)) ? null : parseInt(coinsVal));
+  const texture = isAnim ? `github/shields/${id}/${id}_0.png` : `github/shields/${id}.png`;
+  return { id, name, category: 'SHIELD', texture, icon, animated: isAnim, free, price: Math.round(price), priceCurrency: 'SOUL_COINS', frameCount, frameDelayMs: frameDelay, coins, createdAt: Date.now() };
+}
+function updateFbPreview() {
+  try { $('#fb-preview').textContent = JSON.stringify(buildPayload(), null, 2); }
+  catch (e) { $('#fb-preview').textContent = String(e); }
+}
+['sh-name', 'sh-id', 'sh-price', 'sh-icon', 'sh-free', 'frame-delay', 'sh-coins'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateFbPreview);
+});
+$('#sh-animated').addEventListener('change', updateFbPreview);
+async function pushFirebase() {
+  const payload = buildPayload();
+  const base = $('#fb-base').value.trim().replace(/\/$/, '') || 'https://soul-backend-default-rtdb.firebaseio.com';
+  const id = payload.id;
+  $('#fb-log').textContent = 'Reading existing...';
+  // ---- Soul Coins publish gate: publishing to the store costs coins ----
+  let _bUser = null;
+  try { _bUser = firebase.auth().currentUser; } catch (e) {}
+  if (!_bUser) { $('#fb-log').textContent += '\n[blocked] Sign in with your Soul account (Soul Coins gate above) to publish to the catalog.'; return; }
+  try {
+    const r = await fetch(`${base}/capes/catalog/${id}.json`, { method: 'GET' });
+    const existing = await r.json();
+    $('#fb-log').textContent += `\nGET ${id} -> ${r.status} ${existing ? 'exists' : 'null'}`;
+    if (existing && existing.createdAt) { payload.createdAt = existing.createdAt; payload.updatedAt = Date.now(); if (existing.coins !== undefined && payload.coins === null) payload.coins = existing.coins; }
+  } catch (e) { $('#fb-log').textContent += `\nGET error ${e}`; }
+  $('#fb-log').textContent += `\nPUT ${base}/capes/catalog/${id}.json\n` + JSON.stringify(payload, null, 2);
+  try {
+    const r = await fetch(`${base}/capes/catalog/${id}.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const t = await r.text();
+    $('#fb-log').textContent += `\n -> ${r.status} ${t.slice(0, 1000)}`;
+    if (r.ok) {
+      $('#fb-log').textContent += `\n[ok] Firebase registered`;
+      try {
+        await builderSpendPublish(id, payload.name);
+        $('#fb-log').textContent += `\n[ok] Charged ${BUILDER_PUBLISH_COST} Soul Coins for catalog entry (wallet: ${ecoKeyFor(firebase.auth().currentUser)})`;
+      } catch (chErr) {
+        if (String(chErr.message || chErr) === 'INSUFFICIENT') $('#fb-log').textContent += `\n[warn] Not enough Soul Coins to charge ${BUILDER_PUBLISH_COST} â€” top up your wallet.`;
+        else $('#fb-log').textContent += `\n[warn] Coin charge failed: ${chErr.message || chErr}`;
+      }
+      $('#fb-links').innerHTML = `Verify: <a href="${base}/capes/catalog/${id}.json" target="_blank" style="color:var(--ok);text-decoration:underline">capes/catalog/${id}.json</a>`;
+      loadCatalog();
+    } else $('#fb-log').textContent += `\n[fail] check rules (must be .read true .write true)`;
+  } catch (e) { $('#fb-log').textContent += `\nPUT error ${e}`; }
+}
+async function checkFirebase() {
+  const base = $('#fb-base').value.trim().replace(/\/$/, '');
+  const id = slugify($('#sh-id').value);
+  if (!id) { alert('ID'); return; }
+  try {
+    const r = await fetch(`${base}/capes/catalog/${id}.json`);
+    const j = await r.json();
+    $('#fb-log').textContent += `\n[check] ${id} -> ${r.status}\n` + JSON.stringify(j, null, 2).slice(0, 3000);
+  } catch (e) { $('#fb-log').textContent += `\n[check] ${e}`; }
+}
+async function loadCatalog() {
+  const base = ($('#fb-base').value || '').trim().replace(/\/$/, '') || 'https://soul-backend-default-rtdb.firebaseio.com';
+  try {
+    const r = await fetch(`${base}/capes/catalog.json`);
+    const data = await r.json();
+    if (!data) { $('#catalog-list').textContent = 'No catalog yet'; return; }
+    const entries = Object.entries(data).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+    $('#catalog-list').innerHTML = entries.map(([k, v]) => {
+      const shield = String(v.category || '') === 'SHIELD';
+      return `<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;${shield ? 'background:rgba(48,176,255,.06)' : ''}"><img src="${v.icon || ''}" style="width:32px;height:32px;object-fit:contain;background:var(--paper);border:1px solid var(--line)" onerror="this.style.display='none'"><div style="flex:1"><b>${v.name || k}</b> <span style="font-family:monospace;font-size:11px;color:var(--muted)">[${k}]</span> <span style="font-size:11px;color:${v.free ? 'var(--ok)' : 'var(--bolt)'}">${v.free ? 'FREE' : ecoCoinTag(v)}</span> ${shield ? '<span style="font-size:10px;border:1px solid var(--bolt);color:var(--bolt);padding:1px 4px">SHIELD</span>' : ''} ${v.animated ? '<span style="font-size:10px;border:1px solid var(--alert);color:var(--alert);padding:1px 4px">ANIM</span>' : ''}<br><span style="font-size:11px;color:var(--muted)">${v.texture || ''}</span></div></div>`;
+    }).join('');
+    if (!entries.length) $('#catalog-list').textContent = 'Empty catalog';
+  } catch (e) { $('#catalog-list').textContent = 'Load failed: ' + e; }
+}
+async function deployAll() {
+  await pushGithub();
+  await new Promise(r => setTimeout(r, 800));
+  await pushFirebase();
+}
+async function deleteShield() {
+  const id = slugify($('#sh-id').value);
+  if (!id) { alert('ID required'); return; }
+  if (!confirm(`Delete shield "${id}" from GitHub AND Firebase catalog? This cannot be undone.`)) return;
+  const token = $('#gh-token').value.trim();
+  const repo = $('#gh-repo').value.trim() || 'SoulTeam26/Cosmetics';
+  const branch = $('#gh-branch').value.trim() || 'main';
+  const base = ($('#fb-base').value.trim().replace(/\/$/, '')) || 'https://soul-backend-default-rtdb.firebaseio.com';
+  $('#gh-log').textContent = '';
+  if (!token) $('#gh-log').textContent += 'No GitHub PAT â€” skipping GitHub delete (Firebase only).\n';
+  else {
+    try { localStorage.setItem(LS_TOKEN, token); } catch (_) {}
+    try {
+      let deleted = 0;
+      const listRes = await fetch(`https://api.github.com/repos/${repo}/contents/shields/${id}?ref=${branch}`,
+        { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' } });
+      if (listRes.ok) {
+        const arr = await listRes.json();
+        const files = (Array.isArray(arr) ? arr : [arr]).filter(e => e && e.type === 'file' && e.sha);
+        for (const f of files) {
+          const del = await ghApi('DELETE', `/repos/${repo}/contents/${encodeURIComponent(f.path).replace(/%2F/g, '/')}`,
+            token, { message: `Delete ${id} file ${f.name}`, sha: f.sha, branch });
+          if (del.status === 200) { deleted++; $('#gh-log').textContent += `[del] ${f.path}\n`; }
+          else $('#gh-log').textContent += `[del] FAIL ${f.path}: ${del.status} ${String(del.text || '').slice(0, 200)}\n`;
+        }
+        $('#gh-log').textContent += `[github] deleted ${deleted} file(s) from shields/${id}/\n`;
+      } else {
+        const one = await ghApi('GET', `/repos/${repo}/contents/shields/${id}.png?ref=${branch}`, token);
+        if (one.status === 200 && one.data && one.data.sha) {
+          const del = await ghApi('DELETE', `/repos/${repo}/contents/shields/${id}.png`,
+            token, { message: `Delete ${id} static shield`, sha: one.data.sha, branch });
+          if (del.status === 200) { deleted++; $('#gh-log').textContent += `[github] deleted shields/${id}.png\n`; }
+          else $('#gh-log').textContent += `[github] FAIL: ${del.status}\n`;
+        } else $('#gh-log').textContent += `[github] nothing found under shields/${id} (status ${listRes.status})\n`;
+      }
+    } catch (e) { $('#gh-log').textContent += `[github] error ${e}\n`; }
+  }
+  try {
+    const r = await fetch(`${base}/capes/catalog/${id}.json`, { method: 'DELETE' });
+    const t = await r.text();
+    $('#fb-log').textContent += `\n[delete] ${id} -> ${r.status} ${t.slice(0, 200)}`;
+    if (r.ok) { $('#fb-log').textContent += `\n[ok] removed from catalog`; loadCatalog(); }
+  } catch (e) { $('#fb-log').textContent += `\n[delete] error ${e}`; }
+}
+// ================= Soul Coins: builder wallet =================
+// Publishing to the store's catalog is paid in Soul Coins from a Soul account.
+const BUILDER_PUBLISH_COST = 250;
+let builderUser = null;
+let builderBal = null;
+let builderBalRef = null;
+function ecoCoinTag(v) {
+  const coins = (v && v.coins !== undefined && v.coins !== null) ? Number(v.coins) : Math.round(Number(v && v.price) || 0);
+  return coins + (coins === 1 ? ' coin' : ' coins');
+}
+function ecoKeyFor(u) { return u && u.uid ? 'soul_' + String(u.uid).replace(/[.$#\[\]\/]/g, '_') : null; }
+function updateBuilderAcctUI() {
+  const box = document.getElementById('bldr-acct');
+  const cost = document.getElementById('bldr-cost');
+  if (cost) cost.textContent = String(BUILDER_PUBLISH_COST);
+  if (!box) return;
+  if (builderUser) {
+    box.innerHTML = `<b class="mono">${builderUser.email || builderUser.uid}</b><br>
+      <span class="mono" style="color:var(--muted);font-size:11px;">Wallet: ${ecoKeyFor(builderUser)} &middot; Balance: <b style="color:var(--ok)">${builderBal === null ? 'â€¦' : builderBal.toLocaleString()}</b> Coins</span>
+      <div style="margin-top:8px"><button class="btn btn-ghost" onclick="builderLogout()">Logout</button></div>`;
+  } else {
+    box.innerHTML = `<div class="row"><input id="bldr-email" placeholder="Soul account email"></div>
+      <div class="row" style="margin-top:6px"><input id="bldr-pass" type="password" placeholder="Password"></div>
+      <div style="margin-top:10px"><button class="btn btn-ghost" onclick="builderLogin()">Sign in with Soul account</button></div>`;
+  }
+}
+window.builderLogin = async () => {
+  try {
+    const em = document.getElementById('bldr-email').value.trim();
+    const pw = document.getElementById('bldr-pass').value;
+    if (!em || !pw) { alert('Enter your Soul account email and password.'); return; }
+    await firebase.auth().signInWithEmailAndPassword(em, pw);
+    $('#fb-log').textContent += '\n[coins] Soul account signed in.';
+  } catch (e) { alert('Soul login failed: ' + (e.message || e)); }
+};
+window.builderLogout = async () => { try { await firebase.auth().signOut(); } catch (e) {} };
+async function builderSpendPublish(itemId, itemName) {
+  const u = firebase.auth().currentUser; if (!u) throw new Error('NOT_LOGGED_IN');
+  const key = ecoKeyFor(u); const d = firebase.database(); if (!d) throw new Error('NO_DB');
+  let ok = true;
+  await d.ref(`soul_coins/${key}/balance`).transaction(cur => {
+    const c = Number(cur) || 0;
+    if (c < BUILDER_PUBLISH_COST) { ok = false; return c; }
+    return c - BUILDER_PUBLISH_COST;
+  });
+  if (!ok) throw new Error('INSUFFICIENT');
+  await d.ref(`soul_coins/${key}`).update({ updatedAt: Date.now() }).catch(() => {});
+  const logRef = d.ref(`coins_log/${key}`).push();
+  await logRef.set({ type: 'spend', amount: BUILDER_PUBLISH_COST, balanceAfter: (Number(builderBal) || 0) - BUILDER_PUBLISH_COST, itemId: itemId || '', itemName: itemName || '', source: 'builder-publish', at: Date.now() }).catch(() => {});
+}
+try {
+  firebase.auth().onAuthStateChanged(u => {
+    builderUser = u;
+    if (u) {
+      if (builderBalRef) try { builderBalRef.off(); } catch (_) {}
+      builderBalRef = firebase.database().ref(`soul_coins/${ecoKeyFor(u)}/balance`);
+      builderBalRef.on('value', s => { builderBal = Number(s.val()) || 0; updateBuilderAcctUI(); });
+    } else { builderBal = null; }
+    updateBuilderAcctUI();
+  });
+} catch (e) { console.warn('Builder coins init failed:', e); }
+// ================= init =================
+onAnimatedToggle();
+onIdInput();
+updateButtons();
+refreshFramesStrip();
+loadCatalog();
+initPlayer3D();
+</script>
+</body>
+</html>

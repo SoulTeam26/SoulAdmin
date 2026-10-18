@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soul Cape Builder â€” Animated + Static</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<link rel="shortcut icon" href="Soul-Web/soul.png" type="image/x-icon">
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--paper:#121113;--paper-dim:#1A1818;--ink:#F5F1ED;--ink-soft:#D8D2CB;--muted:#8C8680;--bolt:#30b0ff;--bolt-deep:#1f82c8;--alert:#FFB13B;--ok:#22c55e;--err:#ef4444;--line:rgba(245,241,237,0.12);}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.mono{font-family:'JetBrains Mono',monospace}
+.topnav{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:3px solid var(--ink);display:flex;align-items:center;justify-content:space-between;padding:14px 20px;max-width:1280px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:-0.02em;font-size:18px}
+.brand img{width:32px;height:32px}
+.navlinks{display:flex;gap:18px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.navlinks a{padding:6px 10px;border:2px solid transparent}
+.navlinks a.active{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.hero{border-bottom:3px solid var(--ink);background:radial-gradient(600px 300px at 20% 0%, rgba(48,176,255,.12), transparent), var(--paper);padding:32px 20px}
+.hero-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center}
+.hero h1{font-weight:900;font-size:clamp(28px,4vw,44px);letter-spacing:-0.03em;margin:0 0 10px;line-height:1}
+.hero h1 span{background:var(--bolt);padding:0 8px;box-shadow:5px 5px 0 var(--ink);color:var(--paper)}
+.hero p{color:var(--ink-soft);line-height:1.6;margin:0 0 16px;max-width:600px}
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:2px solid var(--ink);padding:6px 10px;background:var(--paper)}
+.badge i{color:var(--bolt)}
+.wrap{max-width:1280px;margin:0 auto;padding:24px 20px}
+.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:20px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}.hero-inner{grid-template-columns:1fr}}
+.card{background:var(--paper-dim);border:3px solid var(--ink);padding:20px;box-shadow:6px 6px 0 var(--ink)}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.card-head h2{font-weight:900;font-size:18px;margin:0;letter-spacing:-0.01em}
+.card-head .step{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--bolt);color:var(--paper);padding:4px 8px;border:2px solid var(--ink)}
+label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block;margin:14px 0 6px}
+label small{color:var(--bolt);font-weight:400;letter-spacing:0}
+input,select,textarea{width:100%;background:var(--paper);border:2px solid var(--ink);color:var(--ink);padding:11px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:border-color .12s}
+input:focus,select:focus,textarea:focus{border-color:var(--bolt)}
+textarea{resize:vertical;min-height:80px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.row,.row3{grid-template-columns:1fr}}
+.hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}
+.drop{border:2px dashed var(--ink);background:var(--paper);padding:18px;text-align:center;cursor:pointer;transition:border-color .12s, background .12s}
+.drop:hover{border-color:var(--bolt);background:rgba(48,176,255,.06)}
+.drop i{font-size:22px;color:var(--bolt);margin-bottom:8px;display:block}
+.drop b{font-family:'JetBrains Mono',monospace;font-size:13px}
+.drop p{font-size:12px;color:var(--muted);margin:6px 0 0}
+.drop.dragover{border-color:var(--ok);background:rgba(34,197,94,.08)}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px;margin-top:12px;max-height:320px;overflow:auto;padding:8px;background:var(--paper);border:2px solid var(--ink)}
+.preview-grid img{width:100%;aspect-ratio:2/1;object-fit:contain;background:var(--paper-dim);border:1px solid var(--line);image-rendering:pixelated}
+.preview-grid .ph{aspect-ratio:2/1;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);border:1px dashed var(--muted);background:var(--paper)}
+.btn{appearance:none;border:3px solid var(--ink);background:var(--ink);color:var(--paper);padding:12px 16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s, box-shadow .12s, background .12s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--bolt-deep)}
+.btn:disabled{opacity:.5;pointer-events:none;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;color:var(--bolt);border-color:var(--bolt)}
+.btn-ghost:hover{background:var(--bolt);color:var(--paper)}
+.btn-ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn-warn{background:var(--alert);border-color:var(--alert);color:#000}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.log{margin-top:14px;background:#0a0a0a;border:2px solid var(--ink);padding:12px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;max-height:240px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.log .ok{color:var(--ok)} .log .err{color:var(--err)} .log .mut{color:var(--muted)}
+.stat{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;border:1px solid var(--ink);padding:6px 8px;background:var(--paper)}
+.stat b{color:var(--bolt)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border:none}
+.kv span:first-child{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:11px}
+.progress{height:8px;background:var(--paper);border:2px solid var(--ink);overflow:hidden;margin-top:10px}
+.progress i{display:block;height:100%;background:var(--bolt);width:0%;transition:width .25s}
+.toggle{position:relative;display:inline-flex;align-items:center;gap:10px;cursor:pointer}
+.toggle input{width:44px;height:24px;appearance:none;background:var(--paper);border:2px solid var(--ink);position:relative;cursor:pointer}
+.toggle input:checked{background:var(--bolt);border-color:var(--bolt)}
+.toggle input::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:var(--ink);transition:transform .18s}
+.toggle input:checked::after{transform:translateX(20px);background:var(--paper)}
+.small{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.divider{height:2px;background:var(--ink);margin:18px 0;opacity:.15}
+.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="topnav">
+  <div class="brand"><img src="Soul-Web/soul.png" onerror="this.style.display='none'"> <span>Soul Cape Builder</span> <span style="font-family:'JetBrains Mono',monospace;font-size:10px;border:2px solid var(--ink);padding:3px 6px;margin-left:6px">v1.0</span></div>
+  <div class="navlinks">
+    <a href="https://soulclientmc.vercel.app/" target="_blank"><i class="fa-solid fa-store"></i> Store</a>
+    <a href="https://admin-mu-drab.vercel.app/"><i class="fa-solid fa-shield-halved"></i> Admin</a>
+    <a class="active" href="#"><i class="fa-solid fa-wand-magic-sparkles"></i> Builder</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="badge"><i class="fa-solid fa-bolt"></i> GitHub + Firebase auto deploy</div>
+      <h1>Paper Samurai <span>style</span> cape factory</h1>
+      <p>Upload a cape video or a single PNG, auto-convert to <code>256x128</code> frames, preview live, zip download, push to <code>SoulTeam26/Cosmetics</code> and register in Firebase <code>capes/catalog/{id}</code> in one click. Supports <b>animated</b> (30Ã— 100ms) and <b>static</b> (single file).</p>
+      <div class="top-actions">
+        <span class="stat"><i class="fa-solid fa-film"></i> <b>Animated</b> 30f @100ms</span>
+        <span class="stat"><i class="fa-solid fa-image"></i> <b>Static</b> 1Ã— PNG</span>
+        <span class="stat"><i class="fa-brands fa-github"></i> <b>Cosmetics</b> private</span>
+        <span class="stat"><i class="fa-solid fa-fire"></i> <b>RTDB</b> open</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2><i class="fa-solid fa-circle-info"></i> Quick start</h2></div>
+      <div class="kv"><span>Animated</span><span>MP4 960Ã—480 2:1 preferred â†’ 30 PNGs 256Ã—128 + 800Ã—400 preview â†’ <code>capes/{id}/{id}_0.png</code></span></div>
+      <div class="kv"><span>Static</span><span>PNG 64Ã—32 / 256Ã—128 â†’ single <code>capes/{id}.png</code> â€” no video needed</span></div>
+      <div class="kv"><span>Theme</span><span>Copies <code>Soul-Web/index.html</code> + <code>admin.html</code> styles</span></div>
+      <div class="kv"><span>Needs</span><span>GitHub PAT (<code>Contents:write</code>) + Firebase URL (open rules)</span></div>
+      <p class="hint">Open via <code>http://localhost:8000/cape-builder.html</code> â€” <code>file://</code> blocks Firebase & GitHub.</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="grid">
+    <!-- LEFT: FORM -->
+    <div class="card">
+      <div class="card-head"><h2><i class="fa-solid fa-shirt"></i> 1 â€” Cape details</h2><span class="step">Step 1</span></div>
+
+      <label>Cape name <small>*</small></label>
+      <input id="cape-name" placeholder="Paper Samurai" value="Paper Samurai" oninput="onNameInput()">
+
+      <div class="row">
+        <div>
+          <label>ID (catalog key) <small>* auto-slug</small></label>
+          <input id="cape-id" placeholder="paper-samurai" value="paper-samurai" oninput="onIdInput()">
+          <div class="hint" id="id-hint">Folder: <code>capes/paper-samurai/</code></div>
+        </div>
+        <div>
+          <label>Price (Soul Coins) <small>*</small></label>
+          <input id="cape-price" type="number" step="1" min="0" value="300">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Type</label>
+          <select id="cape-type" onchange="onTypeChange()">
+            <option value="CAPE" selected>CAPE</option>
+            <option value="ACCESSORY">ACCESSORY</option>
+            <option value="BOOTS">BOOTS</option>
+            <option value="GLOVES">GLOVES</option>
+          </select>
+        </div>
+        <div>
+          <label>Icon URL <small>optional</small></label>
+          <input id="cape-icon" placeholder="https://raw.githubusercontent.com/SoulTeams/Post-Images/main/PaperSamurai.png">
+          <div class="hint">Leave blank â†’ auto use <code>Post-Images/{Id}.png</code> after preview upload</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Animated?</label>
+          <label class="toggle"><input type="checkbox" id="cape-animated" checked onchange="onAnimatedToggle()"><span class="small" id="anim-label">Animated â€” video â†’ 30 frames</span></label>
+        </div>
+        <div>
+          <label>Free (everyone owns)</label>
+          <label class="toggle"><input type="checkbox" id="cape-free"><span class="small">No â€” paid cape (Soul Coins)</span></label>
+        </div>
+      </div>
+
+      <div id="anim-fields" class="row">
+        <div><label>Frame count</label><input id="frame-count" type="number" min="2" max="120" value="30"></div>
+        <div><label>Frame delay (ms)</label><input id="frame-delay" type="number" min="20" step="10" value="100"><div class="hint">100 = 10fps (default)</div></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="card-head"><h2><i class="fa-solid fa-photo-film"></i> 2 â€” Source</h2><span class="step">Step 2</span></div>
+
+      <!-- PLAIN PNG UPLOAD â€” always visible for static capes (your request) -->
+      <div id="plain-block" style="border:2px solid var(--bolt);background:rgba(48,176,255,0.04);padding:14px;margin-bottom:16px">
+        <label style="margin-top:0;color:var(--bolt)"><i class="fa-solid fa-file-arrow-up"></i> Plain cape file upload (PNG) â€” Static cape à¤•à¥‡ à¤²à¤¿à¤ <small style="background:var(--ok);color:#fff;padding:2px 6px">NEW</small></label>
+        <div class="drop" id="drop-plain" onclick="document.getElementById('plain-input').click(); if($('#cape-animated').checked && confirm('Switch to Static (Animated OFF) to upload plain PNG?')){ $('#cape-animated').checked=false; onAnimatedToggle(); }" ondragover="onDragOverPlain(event)" ondragleave="onDragLeavePlain(event)" ondrop="onDropPlain(event)" style="border-color:var(--bolt)">
+          <i class="fa-solid fa-image" style="color:var(--ok)"></i>
+          <b>Click or drag & drop cape PNG file</b>
+          <p>Plain / Static cape â€” 64Ã—32 or 256Ã—128 PNG. Name à¤¡à¤¾à¤² à¤•à¥‡ à¤¸à¥€à¤§à¥‡ GitHub à¤ªà¥‡ à¤œà¤¾à¤à¤—à¤¾.</p>
+        </div>
+        <input id="plain-input" type="file" accept="image/png,image/*,.png" class="hidden" onchange="onPlainSelected(event)">
+        <div class="toolbar" style="margin-top:10px">
+          <button class="btn btn-ok" onclick="document.getElementById('plain-input').click()"><i class="fa-solid fa-folder-open"></i> Choose PNG file</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('plain-input').value=''; $('#plain-info').textContent='No file selected.'"><i class="fa-solid fa-xmark"></i> Clear file</button>
+        </div>
+        <div id="plain-info" class="log" style="min-height:36px;margin-top:10px">No file selected â€” pick a PNG to make a static cape instantly.</div>
+      </div>
+
+      <!-- Animated source: video -->
+      <div id="video-block">
+        <label>Video MP4 (animated) <small>animated ON à¤¤à¥‹ à¤¯à¥‡ use à¤¹à¥‹à¤—à¤¾</small></label>
+        <div class="drop" id="drop-video" onclick="document.getElementById('video-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropVideo(event)">
+          <i class="fa-solid fa-upload"></i>
+          <b>Click or drag & drop MP4</b>
+          <p>Preferred 960Ã—480 (2:1), 2â€“5s. Will sample <span id="drop-frame-count">30</span> frames evenly.</p>
+        </div>
+        <input id="video-input" type="file" accept="video/mp4,video/*" class="hidden" onchange="onVideoSelected(event)">
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Video info</label>
+            <div id="video-info" class="log" style="min-height:80px">No video selected.</div>
+          </div>
+          <div>
+            <label>Preview (800Ã—400)</label>
+            <div id="preview-box" style="background:#0b0c0e;border:2px solid var(--ink);aspect-ratio:2/1;display:flex;align-items:center;justify-content:center;overflow:hidden">
+              <span class="small" style="padding:12px">Preview appears after convert</span>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="btn-convert" onclick="convertVideo()"><i class="fa-solid fa-wand-magic-sparkles"></i> Convert video â†’ 30 frames</button>
+          <button class="btn btn-ghost" onclick="clearVideo()"><i class="fa-solid fa-xmark"></i> Clear</button>
+        </div>
+        <div class="progress hidden" id="video-progress"><i id="video-progress-bar"></i></div>
+      </div>
+
+      <!-- Static source: single PNG (also triggered by plain upload) -->
+      <div id="image-block" class="hidden">
+        <label>Image PNG (static) <small>*</small></label>
+        <div class="drop" id="drop-image" onclick="document.getElementById('image-input').click()" ondragover="onDragOverImg(event)" ondragleave="onDragLeaveImg(event)" ondrop="onDropImage(event)">
+          <i class="fa-solid fa-image"></i>
+          <b>Click or drag & drop PNG</b>
+          <p>64Ã—32 or 256Ã—128 cape texture. Will be resized to 256Ã—128 if needed.</p>
+        </div>
+        <input id="image-input" type="file" accept="image/png,image/*" class="hidden" onchange="onImageSelected(event)">
+        <div id="image-info" class="log" style="min-height:60px;margin-top:10px">No image selected.</div>
+        <div id="static-preview" style="margin-top:10px;background:#0b0c0e;border:2px solid var(--ink);aspect-ratio:2/1;display:flex;align-items:center;justify-content:center;overflow:hidden;max-height:180px">
+          <span class="small">Static preview</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <label>Frames preview (<span id="frames-count-label">0</span> / <span id="frames-expected">30</span>)</label>
+      <div id="frames-grid" class="preview-grid"><div class="ph">No frames yet â€” convert a video or pick an image</div></div>
+      <div class="toolbar">
+        <button class="btn btn-ghost" id="btn-zip" onclick="downloadZip()" disabled><i class="fa-solid fa-file-zipper"></i> Download ZIP</button>
+        <span class="small" id="zip-hint">ZIP contains <code>capes/{id}/</code> + preview</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: DEPLOY -->
+    <div class="card">
+      <div class="card-head"><h2><i class="fa-solid fa-rocket"></i> 3 â€” Deploy</h2><span class="step">Step 3</span></div>
+
+      <label>GitHub PAT <small>Contents:write for Cosmetics</small></label>
+      <div style="display:flex;gap:8px">
+        <input id="gh-token" type="password" placeholder="github_pat_... or ghp_...">
+        <button class="btn btn-ghost" onclick="toggleToken()" style="padding:11px 14px"><i class="fa-solid fa-eye" id="token-eye"></i></button>
+      </div>
+      <div class="hint">Stored in <code>localStorage</code> only. Use a classic PAT with <code>repo</code> scope (works for all Soul repos). <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" style="color:var(--bolt);text-decoration:underline">Generate</a></div>
+
+      <div class="row">
+        <div><label>Repo (capes)</label><input id="gh-repo" value="SoulTeam26/Cosmetics"></div>
+        <div><label>Branch</label><input id="gh-branch" value="main"></div>
+      </div>
+      <div class="row">
+        <div><label>Post-Images repo (preview)</label><input id="post-repo" value="SoulTeams/Post-Images"></div>
+        <div><label>Auto-upload preview?</label><label class="toggle"><input type="checkbox" id="auto-post" checked><span class="small">Yes</span></label></div>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn" id="btn-gh" onclick="pushGithub()" disabled><i class="fa-brands fa-github"></i> Push to GitHub</button>
+        <button class="btn btn-ghost" onclick="checkGithub()"><i class="fa-solid fa-magnifying-glass"></i> Check exists</button>
+      </div>
+      <div class="progress hidden" id="gh-progress"><i id="gh-progress-bar"></i></div>
+      <div id="gh-log" class="log">GitHub log â€” waiting for frames.</div>
+      <div id="gh-links" class="hint" style="margin-top:8px"></div>
+
+      <div class="divider"></div>
+      <label>Firebase RTDB <small>open rules</small></label>
+      <div class="hint">DB: <code>https://soul-backend-default-rtdb.firebaseio.com</code> â€” Path <code>capes/catalog/{id}</code> â€” same as <code>admin.html</code></div>
+      <div class="row">
+        <div><label>Firebase base</label><input id="fb-base" value="https://soul-backend-default-rtdb.firebaseio.com"></div>
+        <div><label>Coins <small>optional</small></label><input id="cape-coins" placeholder="null or number"></div>
+      </div>
+      <label>Payload preview</label>
+      <div id="fb-preview" class="log" style="min-height:120px">Fill details + generate frames to see payload.</div>
+      <div class="toolbar">
+        <button class="btn btn-ok" id="btn-fb" onclick="pushFirebase()" disabled><i class="fa-solid fa-fire"></i> Push to Firebase</button>
+        <button class="btn btn-ghost" onclick="checkFirebase()"><i class="fa-solid fa-cloud-arrow-down"></i> Check catalog</button>
+      </div>
+      <div id="fb-log" class="log">Firebase log.</div>
+      <div id="fb-links" class="hint"></div>
+
+      <div class="divider"></div>
+      <div class="toolbar">
+        <button class="btn btn-warn" id="btn-all" onclick="deployAll()" disabled><i class="fa-solid fa-bolt"></i> One-click: GitHub + Firebase</button>
+        <button class="btn btn-ghost" onclick="resetAll()"><i class="fa-solid fa-rotate"></i> Reset</button>
+        <button class="btn" onclick="deleteCape()" style="background:var(--err);border-color:var(--err);color:#fff"><i class="fa-solid fa-trash"></i> Delete cape</button>
+      </div>
+      <div style="margin-top:8px"><label class="small" style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="del-preview" style="width:14px"> also delete Post-Images preview</label>
+      </div>
+      <p class="small" style="margin-top:10px">Static cape uploads single file <code>capes/{id}.png</code> â€” Animated uploads folder <code>capes/{id}/{id}_0.png â€¦</code> â€” client <code>GithubCapeManager.java:362</code> auto-detects.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <div class="card-head"><h2><i class="fa-solid fa-coins"></i> Soul Coins â€” Builder Account</h2></div>
+    <p class="small" style="color:var(--ink-soft);line-height:1.6;margin-top:0">Publishing to the catalog costs <b class="mono" id="bldr-cost" style="color:var(--ok)">250</b> Soul Coins, charged to your Soul account wallet (<code>soul_coins/soul_&lt;uid&gt;</code>) after a successful push. The <b class="mono">Coins</b> field below is the store selling price users pay.</p>
+    <div id="bldr-acct" style="font-size:13px"></div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <div class="card-head"><h2><i class="fa-solid fa-list-check"></i> Live catalog</h2><button class="btn btn-ghost" onclick="loadCatalog()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button></div>
+    <div id="catalog-list" class="log" style="max-height:220px">Loading...</div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <div class="card-head"><h2><i class="fa-solid fa-book"></i> How it works</h2></div>
+    <div class="row">
+      <div>
+        <b class="mono" style="color:var(--bolt)">Animated (video)</b>
+        <p class="small" style="color:var(--ink-soft);line-height:1.6">MP4 â†’ Canvas seek loop sampling <code>duration/frameCount</code> â†’ resize <code>256Ã—128</code> via <code>drawImage</code> â†’ base64 PNG â†’ JSZip â†’ GitHub folder. Timing <code>frameDelayMs 100</code> matches <code>AnimatedCape.java:36</code> default.</p>
+      </div>
+      <div>
+        <b class="mono" style="color:var(--bolt)">Static (image)</b>
+        <p class="small" style="color:var(--ink-soft);line-height:1.6">Single PNG â†’ canvas resize to <code>256Ã—128</code> â†’ <code>capes/{id}.png</code> â†’ Firebase <code>animated:false frameCount:0</code>. Use <code>64Ã—32</code> native or any size (auto scaled).</p>
+      </div>
+    </div>
+    <p class="hint">Must open via <code>http://localhost:8000/cape-builder.html</code> â€” <code>file://</code> blocks <code>fetch</code> + Firebase. Run <code>python -m http.server 8000</code> in <code>D:\</code>.</p>
+  </div>
+</div>
+
+<!-- hidden video/canvas for processing -->
+<video id="hidden-video" class="hidden" muted playsinline crossorigin="anonymous"></video>
+<canvas id="hidden-canvas" width="256" height="128" class="hidden"></canvas>
+<canvas id="preview-canvas" width="800" height="400" class="hidden"></canvas>
+
+<script>
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const capesState = { frames: [], previewDataUrl: null, previewBlob: null, staticDataUrl: null, staticBase64: null, staticInfo: null, videoFile: null, imageFile: null };
+const LS_TOKEN = 'soul_gh_token';
+
+function slugify(s){ return (s||'').toLowerCase().trim().replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,''); }
+function toast(msg, ok=false){ const l=$('#gh-log'); l.textContent += '\n' + msg; l.scrollTop=l.scrollHeight; }
+function fbToast(msg){ const l=$('#fb-log'); l.textContent += '\n' + msg; l.scrollTop=l.scrollHeight; }
+function setProgress(id, pct, show){ const w=$(id); if(show) w.classList.remove('hidden'); const b=w.querySelector('i'); if(b) b.style.width = pct+'%'; if(pct>=100) setTimeout(()=>w.classList.add('hidden'),700); }
+
+function onNameInput(){
+  const name=$('#cape-name').value;
+  const idIn=$('#cape-id');
+  if(!idIn.dataset.touched) idIn.value = slugify(name) || 'paper-samurai';
+  onIdInput();
+}
+function onIdInput(){
+  $('#cape-id').dataset.touched='1';
+  const id = slugify($('#cape-id').value) || 'paper-samurai';
+  const isAnim = $('#cape-animated').checked;
+  $('#id-hint').innerHTML = isAnim ? `Folder: <code>capes/${id}/</code> â€” <code>${id}_0.png â€¦ ${id}_${(parseInt($('#frame-count').value)||30)-1}.png</code>` : `File: <code>capes/${id}.png</code>`;
+  $('#drop-frame-count').textContent = $('#frame-count').value;
+  $('#frames-expected').textContent = isAnim ? $('#frame-count').value : '1';
+  updateFbPreview();
+  updateButtons();
+}
+function onTypeChange(){ updateFbPreview(); }
+function onAnimatedToggle(){
+  const anim = $('#cape-animated').checked;
+  $('#anim-label').textContent = anim ? 'Animated â€” video â†’ 30 frames' : 'Static â€” single PNG';
+  $('#anim-fields').style.display = anim ? '' : 'none';
+  $('#video-block').classList.toggle('hidden', !anim);
+  $('#image-block').classList.toggle('hidden', anim);
+  $('#frames-expected').textContent = anim ? $('#frame-count').value : '1';
+  onIdInput();
+  updateButtons();
+}
+$('#cape-animated').addEventListener('change', onAnimatedToggle);
+$('#frame-count').addEventListener('input', onIdInput);
+
+// token persistence
+(function initToken(){
+  const t = localStorage.getItem(LS_TOKEN);
+  if(t) $('#gh-token').value = t;
+  $('#gh-token').addEventListener('input', ()=> localStorage.setItem(LS_TOKEN, $('#gh-token').value.trim()));
+})();
+
+// Auto-load the team PAT from Firebase config (saved by the owner).
+// Does NOT overwrite a token typed manually in this tab.
+try {
+  firebase.database().ref('config/gh_token').once('value').then(function(s){
+    var dbTok = String(s.val() || '').trim();
+    if (!dbTok) return;
+    var input = $('#gh-token');
+    if (!input.value.trim()) {
+      input.value = dbTok;
+      localStorage.setItem(LS_TOKEN, dbTok);
+      $('#gh-log').textContent += '\n[pat] Team PAT auto-loaded from Firebase config/gh_token.';
+    }
+  }).catch(function(){});
+} catch (_) {}
+function toggleToken(){
+  const i=$('#gh-token'); i.type = i.type==='password' ? 'text' : 'password';
+  $('#token-eye').className = i.type==='password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+}
+function updateButtons(){
+  const hasFrames = capesState.frames.length>0;
+  const hasId = !!slugify($('#cape-id').value);
+  const hasPrice = $('#cape-price').value !== '';
+  $('#btn-gh').disabled = !hasFrames || !hasId;
+  $('#btn-fb').disabled = !hasFrames || !hasId || !hasPrice;
+  $('#btn-all').disabled = $('#btn-gh').disabled || $('#btn-fb').disabled;
+  $('#btn-zip').disabled = !hasFrames;
+  updateFbPreview();
+}
+function resetAll(){
+  capesState.frames=[]; capesState.previewDataUrl=null; capesState.previewBlob=null; capesState.staticDataUrl=null;
+  $('#frames-grid').innerHTML='<div class="ph">No frames yet â€” convert a video or pick an image</div>';
+  $('#frames-count-label').textContent='0';
+  $('#preview-box').innerHTML='<span class="small" style="padding:12px">Preview appears after convert</span>';
+  $('#static-preview').innerHTML='<span class="small">Static preview</span>';
+  $('#video-info').textContent='No video selected.';
+  $('#image-info').textContent='No image selected.';
+  $('#gh-log').textContent='GitHub log â€” waiting for frames.';
+  $('#fb-log').textContent='Firebase log.';
+  $('#gh-links').innerHTML=''; $('#fb-links').innerHTML='';
+  $('#fb-preview').textContent='Fill details + generate frames to see payload.';
+  setProgress('#video-progress',0,true); $('#video-progress').classList.add('hidden');
+  setProgress('#gh-progress',0,true); $('#gh-progress').classList.add('hidden');
+  updateButtons();
+}
+
+// ---------- drag & drop ----------
+function onDragOver(e){ e.preventDefault(); $('#drop-video').classList.add('dragover'); }
+function onDragLeave(e){ $('#drop-video').classList.remove('dragover'); }
+function onDropVideo(e){
+  e.preventDefault(); $('#drop-video').classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if(f) handleVideoFile(f);
+}
+function onDragOverImg(e){ e.preventDefault(); $('#drop-image').classList.add('dragover'); }
+function onDragLeaveImg(e){ $('#drop-image').classList.remove('dragover'); }
+function onDropImage(e){
+  e.preventDefault(); $('#drop-image').classList.remove('dragover');
+  const f=e.dataTransfer.files[0]; if(f) handleImageFile(f);
+}
+function onDragOverPlain(e){ e.preventDefault(); $('#drop-plain').classList.add('dragover'); }
+function onDragLeavePlain(e){ $('#drop-plain').classList.remove('dragover'); }
+function onDropPlain(e){
+  e.preventDefault(); $('#drop-plain').classList.remove('dragover');
+  const f=e.dataTransfer.files[0]; if(f) handlePlainFile(f);
+}
+function onVideoSelected(e){ const f=e.target.files[0]; if(f) handleVideoFile(f); }
+function onImageSelected(e){ const f=e.target.files[0]; if(f) handleImageFile(f); }
+function onPlainSelected(e){ const f=e.target.files[0]; if(f) handlePlainFile(f); }
+function handlePlainFile(file){
+  // plain PNG is static â€” force animated OFF and reuse image handler
+  if($('#cape-animated').checked){
+    $('#cape-animated').checked=false;
+    onAnimatedToggle();
+  }
+  $('#plain-info').textContent = `File: ${file.name} | ${(file.size/1024).toFixed(1)} KB | type ${file.type||'image/png'} â€” loadingâ€¦`;
+  handleImageFile(file);
+  // also mirror to plain-info after image handler finishes (handleImageFile updates image-info)
+  setTimeout(()=>{
+    const txt = $('#image-info').textContent;
+    $('#plain-info').textContent = txt + ' â†’ Ready to Push to GitHub / Firebase (static)';
+  }, 600);
+}
+function clearVideo(){ $('#video-input').value=''; capesState.videoFile=null; $('#video-info').textContent='No video selected.'; resetAll(); }
+
+// ---------- video handling ----------
+function handleVideoFile(file){
+  capesState.videoFile=file;
+  const info = `File: ${file.name}\nSize: ${(file.size/1024/1024).toFixed(2)} MB\nType: ${file.type || 'video/mp4'}`;
+  $('#video-info').textContent = info + '\nStatus: ready â†’ click Convert';
+  // show quick preview first frame via video element?
+  const url = URL.createObjectURL(file);
+  const v = $('#hidden-video');
+  v.src = url;
+  v.onloadedmetadata = ()=>{
+    const txt = `File: ${file.name} | ${(file.size/1024/1024).toFixed(2)} MB\nVideo: ${v.videoWidth}Ã—${v.videoHeight} | duration ${v.duration.toFixed(2)}s | ${$('#frame-count').value} frames @${$('#frame-delay').value}ms`;
+    $('#video-info').textContent = txt;
+  };
+}
+function handleImageFile(file){
+  capesState.imageFile=file;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    capesState.staticDataUrl=reader.result;
+    // get base64 without prefix
+    capesState.staticBase64 = reader.result.split(',')[1];
+    // render preview resized to 256x128
+    const img=new Image();
+    img.onload=()=>{
+      // draw 256x128
+      const c=document.createElement('canvas'); c.width=256; c.height=128;
+      const ctx=c.getContext('2d'); ctx.imageSmoothingQuality='high';
+      ctx.drawImage(img,0,0,256,128);
+      const dataUrl=c.toDataURL('image/png');
+      capesState.staticDataUrl=dataUrl;
+      capesState.staticBase64=dataUrl.split(',')[1];
+      // also preview box 800x400 from original? use same
+      const pc=document.createElement('canvas'); pc.width=800; pc.height=400;
+      const pctx=pc.getContext('2d'); pctx.drawImage(img,0,0,800,400);
+      capesState.previewDataUrl=pc.toDataURL('image/png');
+      // frames array single entry for uniform handling
+      capesState.frames=[{index:0, dataUrl, base64:capesState.staticBase64, size: Math.round(dataUrl.length*0.75)}];
+      capesState.frames[0].dataUrl=dataUrl;
+      // but need base64 correct
+      // update UI
+      $('#image-info').textContent = `File: ${file.name} | ${(file.size/1024).toFixed(1)} KB | ${img.width}Ã—${img.height} â†’ 256Ã—128`;
+      $('#static-preview').innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated;background:var(--paper-dim)">`;
+      $('#frames-grid').innerHTML = `<img src="${dataUrl}" title="static 0">`;
+      $('#frames-count-label').textContent='1';
+      // preview box also
+      $('#preview-box').innerHTML = `<img src="${capesState.previewDataUrl}" style="width:100%;height:100%;object-fit:cover">`;
+      updateButtons();
+      // set icon default if blank
+      if(!$('#cape-icon').value.trim()){
+        const id=slugify($('#cape-id').value)||'paper-samurai';
+        $('#cape-icon').value=`https://raw.githubusercontent.com/SoulTeams/Post-Images/main/${id.charAt(0).toUpperCase()+id.slice(1).replace(/-/g,'')}.png`;
+      }
+    };
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function convertVideo(){
+  const file=capesState.videoFile || ($('#video-input').files[0]);
+  if(!file){ alert('Pick an MP4 first'); return; }
+  const frameCount=parseInt($('#frame-count').value)||30;
+  const video=$('#hidden-video');
+  const canvas=$('#hidden-canvas');
+  const pCanvas=$('#preview-canvas');
+  const ctx=canvas.getContext('2d'); const pctx=pCanvas.getContext('2d');
+  // ensure video loaded
+  if(!video.src || video.src==='') video.src = URL.createObjectURL(file);
+  await new Promise((res,rej)=>{
+    if(video.readyState>=1 && video.duration) return res();
+    video.onloadedmetadata=()=>res();
+    video.onerror=()=>rej(new Error('video load failed'));
+    // if already set, try reload
+    if(video.duration) res();
+  });
+  const duration=video.duration;
+  const vw=video.videoWidth, vh=video.videoHeight;
+  if(!duration || !vw){ alert('Video metadata not ready, try again'); return; }
+  $('#video-info').textContent = `File: ${file.name} | ${(file.size/1024/1024).toFixed(2)}MB\nVideo: ${vw}Ã—${vh} | ${duration.toFixed(2)}s | extracting ${frameCount} framesâ€¦`;
+  setProgress('#video-progress',0,false); $('#video-progress').classList.remove('hidden');
+  $('#frames-grid').innerHTML='';
+  capesState.frames=[];
+
+  // helper seek
+  function seek(t){
+    return new Promise((resolve,reject)=>{
+      let done=false;
+      function onSeeked(){
+        video.removeEventListener('seeked', onSeeked);
+        done=true; resolve();
+      }
+      video.addEventListener('seeked', onSeeked);
+      video.currentTime = Math.min(Math.max(0,t), duration-0.05);
+      // fallback timeout if seeked not fired (some browsers)
+      setTimeout(()=>{ if(!done){ video.removeEventListener('seeked', onSeeked); resolve(); } }, 800);
+    });
+  }
+
+  // try to play a bit to ensure decode? Not needed.
+  try{ video.pause(); }catch{}
+
+  for(let i=0;i<frameCount;i++){
+    const t = (i * duration / frameCount) + 0.01;
+    await seek(t);
+    // draw 256x128 (stretch to fill, preserve 2:1)
+    canvas.width=256; canvas.height=128;
+    ctx.imageSmoothingQuality='high';
+    ctx.drawImage(video,0,0,256,128);
+    const dataUrl=canvas.toDataURL('image/png');
+    const base64=dataUrl.split(',')[1];
+    capesState.frames.push({index:i, dataUrl, base64, size: Math.round(base64.length*0.75)});
+    // preview from first frame 800x400
+    if(i===0){
+      pCanvas.width=800; pCanvas.height=400;
+      pctx.imageSmoothingQuality='high';
+      pctx.drawImage(video,0,0,800,400);
+      capesState.previewDataUrl=pCanvas.toDataURL('image/png');
+      capesState.previewBlob = await new Promise(r=>pCanvas.toBlob(r,'image/png'));
+      $('#preview-box').innerHTML=`<img src="${capesState.previewDataUrl}" style="width:100%;height:100%;object-fit:cover">`;
+    }
+    // update grid incrementally
+    const img=document.createElement('img'); img.src=dataUrl; img.title=`${i}`; img.loading='lazy';
+    $('#frames-grid').appendChild(img);
+    $('#frames-count-label').textContent = String(i+1);
+    setProgress('#video-progress', Math.round((i+1)/frameCount*100), true);
+    $('#video-info').textContent = `Extracting ${i+1}/${frameCount} @${t.toFixed(2)}s â†’ 256Ã—128`;
+    await new Promise(r=>setTimeout(r,30)); // yield
+  }
+  const totalBytes=capesState.frames.reduce((a,f)=>a+f.size,0);
+  $('#video-info').textContent = `Done: ${frameCount} frames | source ${vw}Ã—${vh} ${duration.toFixed(2)}s â†’ 256Ã—128\nTotal ${ (totalBytes/1024).toFixed(1)} KB | Preview 800Ã—400 ${(capesState.previewBlob? (capesState.previewBlob.size/1024).toFixed(1)+'KB':'')}`;
+  setProgress('#video-progress',100,true);
+  // auto set icon if blank
+  if(!$('#cape-icon').value.trim()){
+    const id=slugify($('#cape-id').value)||'paper-samurai';
+    $('#cape-icon').value=`https://raw.githubusercontent.com/SoulTeams/Post-Images/main/${id.charAt(0).toUpperCase()+id.slice(1).replace(/-/g,'')}.png`;
+  }
+  updateButtons();
+  $('#gh-log').textContent = `Converted ${frameCount} frames â€” ready to ZIP / push.\n` + $('#gh-log').textContent;
+}
+
+// ---------- ZIP ----------
+async function downloadZip(){
+  if(capesState.frames.length===0){ alert('No frames'); return; }
+  const id=slugify($('#cape-id').value)||'paper-samurai';
+  const isAnim=$('#cape-animated').checked;
+  const zip=new JSZip();
+  if(isAnim){
+    const folder=zip.folder(`capes/${id}`);
+    capesState.frames.forEach(f=>{
+      const name=`${id}_${f.index}.png`;
+      folder.file(name, f.base64, {base64:true});
+    });
+    if(capesState.previewDataUrl){
+      zip.file(`${id}-preview.png`, capesState.previewDataUrl.split(',')[1], {base64:true});
+    }
+  } else {
+    // static single file
+    const f=capesState.frames[0];
+    zip.file(`capes/${id}.png`, f.base64, {base64:true});
+    if(capesState.previewDataUrl) zip.file(`${id}-preview.png`, capesState.previewDataUrl.split(',')[1], {base64:true});
+  }
+  const blob=await zip.generateAsync({type:'blob', compression:'DEFLATE'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`${id}-cape-${isAnim? 'animated':'static'}.zip`; a.click();
+  URL.revokeObjectURL(url);
+  $('#gh-log').textContent += `\nZIP downloaded: ${a.download} ${(blob.size/1024).toFixed(1)}KB`;
+}
+
+// ---------- GitHub ----------
+async function ghApi(method, path, token, body){
+  const url=`https://api.github.com${path}`;
+  const headers={'Authorization':`Bearer ${token}`,'Accept':'application/vnd.github.v3+json','User-Agent':'SoulCapeBuilder'};
+  const opts={method, headers};
+  if(body){ opts.body=JSON.stringify(body); headers['Content-Type']='application/json'; }
+  const r=await fetch(url, opts);
+  const text=await r.text();
+  let data; try{ data=JSON.parse(text); }catch{ data=text; }
+  return {status:r.status, data, text, headers:r.headers};
+}
+async function getSha(token, repo, repoPath, branch){
+  const {status,data}=await ghApi('GET', `/repos/${repo}/contents/${encodeURIComponent(repoPath).replace(/%2F/g,'/')}?ref=${branch}`, token);
+  if(status===200 && data && data.sha) return data.sha;
+  return null;
+}
+async function pushSingleFile(token, repo, branch, repoPath, base64, message){
+  const sha=await getSha(token, repo, repoPath, branch);
+  const body={message, content:base64, branch};
+  if(sha) body.sha=sha;
+  const {status,data,text}=await ghApi('PUT', `/repos/${repo}/contents/${encodeURIComponent(repoPath).replace(/%2F/g,'/')}`, token, body);
+  return {status, data, text, sha};
+}
+async function pushGithub(){
+  const token=$('#gh-token').value.trim();
+  if(!token){ alert('Paste GitHub PAT (Contents:write)'); return; }
+  localStorage.setItem(LS_TOKEN, token);
+  const repo=$('#gh-repo').value.trim()||'SoulTeam26/Cosmetics';
+  const branch=$('#gh-branch').value.trim()||'main';
+  const postRepo=$('#post-repo').value.trim()||'SoulTeams/Post-Images';
+  const id=slugify($('#cape-id').value); if(!id){ alert('ID required'); return; }
+  const isAnim=$('#cape-animated').checked;
+  if(capesState.frames.length===0){ alert('Generate frames first'); return; }
+  $('#gh-log').textContent=''; $('#gh-links').innerHTML='';
+  setProgress('#gh-progress',0,false); $('#gh-progress').classList.remove('hidden');
+  // check repo
+  let ok=true;
+  const repoCheck=await ghApi('GET', `/repos/${repo}`, token);
+  if(repoCheck.status!==200){ $('#gh-log').textContent+=`Repo check failed ${repoCheck.status}: ${repoCheck.text.slice(0,400)}\n`; ok=false; }
+  else $('#gh-log').textContent+=`[ok] ${repo} private=${repoCheck.data.private}\n`;
+
+  // push frames
+  const total=capesState.frames.length;
+  let success=0, fail=0;
+  // sort numerically for animated to push in order (0..n)
+  const framesSorted=[...capesState.frames].sort((a,b)=>a.index-b.index);
+  for(let i=0;i<framesSorted.length;i++){
+    const f=framesSorted[i];
+    const repoPath = isAnim ? `capes/${id}/${id}_${f.index}.png` : `capes/${id}.png`;
+    const msg = isAnim ? (i===0?`Add ${id} animated cape (${total} frames)`:`Add ${id} frame ${f.index}`) : `Add ${id} static cape`;
+    // for static only one iter
+    $('#gh-log').textContent+=`[${isAnim? 'create':'create'}] ${repoPath} ${(f.size/1024).toFixed(1)}KB\n`;
+    $('#gh-log').scrollTop=$('#gh-log').scrollHeight;
+    const base64=f.base64;
+    const {status,text}=await pushSingleFile(token, repo, branch, repoPath, base64, msg);
+    if(status===200||status===201){ $('#gh-log').textContent+=` -> ok ${status}\n`; success++; }
+    else { $('#gh-log').textContent+=` -> FAIL ${status}: ${text.slice(0,600)}\n`; fail++; ok=false; if(status===403) $('#gh-log').textContent+=`   Hint: PAT needs Contents:write for ${repo}. Generate at https://github.com/settings/personal-access-tokens/new\n`; }
+    setProgress('#gh-progress', Math.round((i+1)/total*100), true);
+    await new Promise(r=>setTimeout(r,500));
+    if(!isAnim) break;
+  }
+  // push preview to Post-Images if enabled and have preview
+  if($('#auto-post').checked && capesState.previewDataUrl){
+    const previewBase64=capesState.previewDataUrl.split(',')[1];
+    const capName=id.charAt(0).toUpperCase()+id.slice(1).replace(/-/g,'');
+    const previewPath=`${capName}.png`;
+    $('#gh-log').textContent+=`[post-images] ${postRepo}/${previewPath}\n`;
+    const {status,text}=await pushSingleFile(token, postRepo, 'main', previewPath, previewBase64, `Add ${id} preview 800x400`);
+    if(status===200||status===201) $('#gh-log').textContent+=` -> preview ok ${status} -> https://raw.githubusercontent.com/${postRepo}/main/${previewPath}\n`;
+    else $('#gh-log').textContent+=` -> preview FAIL ${status}: ${text.slice(0,400)}\n`;
+  }
+  $('#gh-log').textContent+=`\nDone: ${success}/${total} frames, ${fail} failed\n`;
+  if(fail===0 && success>0){
+    $('#gh-links').innerHTML=`Verify: <a href="https://github.com/${repo}/tree/${branch}/capes/${id}" target="_blank" style="color:var(--bolt);text-decoration:underline">github.com/${repo}/tree/${branch}/capes/${id}</a> | Raw <code>capes/${id}/${id}_0.png</code> via API`;
+    // auto-update icon field to public Post-Images if we pushed preview
+    if($('#auto-post').checked){
+      const capName=id.charAt(0).toUpperCase()+id.slice(1).replace(/-/g,'');
+      $('#cape-icon').value=`https://raw.githubusercontent.com/${postRepo}/main/${capName}.png`;
+      updateFbPreview();
+    }
+  }
+  setProgress('#gh-progress',100,true);
+  updateButtons();
+}
+async function checkGithub(){
+  const token=$('#gh-token').value.trim();
+  const repo=$('#gh-repo').value.trim()||'SoulTeam26/Cosmetics';
+  const id=slugify($('#cape-id').value); if(!id){ alert('ID'); return; }
+  const isAnim=$('#cape-animated').checked;
+  const branch=$('#gh-branch').value.trim()||'main';
+  const path = isAnim ? `capes/${id}` : `capes/${id}.png`;
+  const headers= token? {'Authorization':`Bearer ${token}`,'Accept':'application/vnd.github.v3+json'} : {'Accept':'application/vnd.github.v3+json'};
+  try{
+    const url=`https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
+    const r=await fetch(url,{headers});
+    const t=await r.text();
+    $('#gh-log').textContent+=`\n[check] GET ${path} -> ${r.status}\n${t.slice(0,2000)}\n`;
+  }catch(e){ $('#gh-log').textContent+=`\n[check] error ${e}\n`; }
+}
+
+// ---------- Firebase ----------
+function buildPayload(){
+  const id=slugify($('#cape-id').value)||'paper-samurai';
+  const name=$('#cape-name').value.trim()||id;
+  const price=parseFloat($('#cape-price').value)||0;
+  const isAnim=$('#cape-animated').checked;
+  const free=$('#cape-free').checked;
+  const frameCount=isAnim? (parseInt($('#frame-count').value)||30) : 0;
+  const frameDelay=isAnim? (parseInt($('#frame-delay').value)||100) : 0;
+  const icon=$('#cape-icon').value.trim() || `https://raw.githubusercontent.com/SoulTeams/Post-Images/main/${id.charAt(0).toUpperCase()+id.slice(1).replace(/-/g,'')}.png`;
+  const category=$('#cape-type').value||'CAPE';
+  const coinsVal=$('#cape-coins').value.trim(); const coins = coinsVal===''? null : (isNaN(parseInt(coinsVal))? null : parseInt(coinsVal));
+  const texture = isAnim ? `github/capes/${id}/${id}_0.png` : `github/capes/${id}.png`;
+  return {id, name, category, texture, icon, animated:isAnim, free, price: Math.round(price), priceCurrency:'SOUL_COINS', frameCount, frameDelayMs: frameDelay, coins, createdAt: Date.now()};
+}
+function updateFbPreview(){
+  try{
+    const p=buildPayload();
+    // try keep existing createdAt if exists? we show new payload preview
+    $('#fb-preview').textContent = JSON.stringify(p,null,2);
+  }catch(e){ $('#fb-preview').textContent = String(e); }
+}
+['cape-name','cape-id','cape-price','cape-type','cape-icon','cape-free','frame-count','frame-delay','cape-coins'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input', updateFbPreview);
+});
+$('#cape-animated').addEventListener('change', updateFbPreview);
+updateFbPreview();
+
+async function pushFirebase(){
+  const payload=buildPayload();
+  const base=$('#fb-base').value.trim().replace(/\/$/,'') || 'https://soul-backend-default-rtdb.firebaseio.com';
+  const id=payload.id;
+  // read existing to preserve createdAt
+  $('#fb-log').textContent='Reading existing...';
+  let existing=null;
+  // ---- Soul Coins publish gate: publishing to the store costs coins ----
+  let _bUser = null;
+  try { _bUser = firebase.auth().currentUser; } catch(e){}
+  if (!_bUser) { $('#fb-log').textContent += '\n[blocked] Sign in with your Soul account in the "Soul Coins â€” Builder Account" card above to publish to the catalog.'; return; }
+  let existing=null;
+  try{
+    const r=await fetch(`${base}/capes/catalog/${id}.json`,{method:'GET'});
+    existing=await r.json();
+    $('#fb-log').textContent+=`\nGET ${id} -> ${r.status} ${existing? 'exists':'null'}`;
+    if(existing && existing.createdAt){ payload.createdAt=existing.createdAt; payload.updatedAt=Date.now(); if(existing.coins!==undefined && payload.coins===null) payload.coins=existing.coins; }
+  }catch(e){ $('#fb-log').textContent+=`\nGET error ${e}`; }
+  // PUT
+  $('#fb-log').textContent+=`\nPUT ${base}/capes/catalog/${id}.json\n`+JSON.stringify(payload,null,2);
+  try{
+    const r=await fetch(`${base}/capes/catalog/${id}.json`,{method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const t=await r.text();
+    $('#fb-log').textContent+=`\n -> ${r.status} ${t.slice(0,1000)}`;
+    if(r.ok){
+      $('#fb-log').textContent+=`\n[ok] Firebase registered`;
+      try {
+        await builderSpendPublish(id, payload.name);
+        $('#fb-log').textContent+=`\n[ok] Charged ${BUILDER_PUBLISH_COST} Soul Coins for catalog entry (wallet: ${ecoKeyFor(firebase.auth().currentUser)})`;
+      } catch (chErr) {
+        if (String(chErr.message||chErr)==='INSUFFICIENT') $('#fb-log').textContent+=`\n[warn] Not enough Soul Coins to charge ${BUILDER_PUBLISH_COST} â€” top up your wallet. Catalog entry remains until fixed.`;
+        else $('#fb-log').textContent+=`\n[warn] Coin charge failed: ${chErr.message||chErr}`;
+      }
+      $('#fb-links').innerHTML=`Verify: <a href="${base}/capes/catalog/${id}.json" target="_blank" style="color:var(--ok);text-decoration:underline">capes/catalog/${id}.json</a> | Admin <a href="https://admin-mu-drab.vercel.app/" style="color:var(--bolt)">admin.html</a>`;
+      loadCatalog();
+    } else {
+      $('#fb-log').textContent+=`\n[fail] check rules (must be .read true .write true)`;
+    }
+  }catch(e){ $('#fb-log').textContent+=`\nPUT error ${e}`; }
+}
+async function checkFirebase(){
+  const base=$('#fb-base').value.trim().replace(/\/$/,'');
+  const id=slugify($('#cape-id').value);
+  if(!id){ alert('ID'); return; }
+  try{
+    const r=await fetch(`${base}/capes/catalog/${id}.json`);
+    const j=await r.json();
+    $('#fb-log').textContent+=`\n[check] ${id} -> ${r.status}\n`+JSON.stringify(j,null,2).slice(0,3000);
+  }catch(e){ $('#fb-log').textContent+=`\n[check] ${e}`; }
+}
+async function loadCatalog(){
+  const base=$('#fb-base').value.trim().replace(/\/$/,'');
+  try{
+    const r=await fetch(`${base}/capes/catalog.json`);
+    const data=await r.json();
+    if(!data){ $('#catalog-list').textContent='No catalog yet'; return; }
+    const entries=Object.entries(data).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+    $('#catalog-list').innerHTML = entries.map(([k,v])=>`<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center"><img src="${v.icon||''}" style="width:32px;height:24px;object-fit:contain;background:var(--paper);border:1px solid var(--line)" onerror="this.style.display='none'"><div style="flex:1"><b>${v.name||k}</b> <span style="font-family:monospace;font-size:11px;color:var(--muted)">[${k}]</span> <span style="font-size:11px;color:${v.free?'var(--ok)':'var(--bolt)'}">${v.free?'FREE':ecoCoinTag(v)}</span> ${v.animated?'<span style="font-size:10px;border:1px solid var(--alert);color:var(--alert);padding:1px 4px">ANIM ${v.frameCount}f @${v.frameDelayMs}ms</span>':''}<br><span style="font-size:11px;color:var(--muted)">${v.texture||''}</span></div></div>`).join('');
+    if(entries.length===0) $('#catalog-list').textContent='Empty catalog';
+  }catch(e){ $('#catalog-list').textContent='Load failed: '+e; }
+}
+loadCatalog();
+
+async function deployAll(){
+  // sequence: github then firebase
+  await pushGithub();
+  await new Promise(r=>setTimeout(r,800));
+  await pushFirebase();
+}
+
+async function deleteCape(){
+  const id=slugify($('#cape-id').value);
+  if(!id){ alert('ID required'); return; }
+  if(!confirm(`Delete cape "${id}" from GitHub AND Firebase catalog? This cannot be undone.`)) return;
+  const token=$('#gh-token').value.trim();
+  const repo=$('#gh-repo').value.trim()||'SoulTeam26/Cosmetics';
+  const branch=$('#gh-branch').value.trim()||'main';
+  const base=$('#fb-base').value.trim().replace(/\/$/,'') || 'https://soul-backend-default-rtdb.firebaseio.com';
+  $('#gh-log').textContent='';
+  if(!token){
+    $('#gh-log').textContent+='No GitHub PAT â€” skipping GitHub delete (Firebase only).\n';
+  } else {
+    localStorage.setItem(LS_TOKEN, token);
+    try{
+      let deleted=0;
+      // try animated folder first: capes/{id}/
+      const listRes=await fetch(`https://api.github.com/repos/${repo}/contents/capes/${id}?ref=${branch}`,
+        {headers:{'Authorization':`Bearer ${token}`,'Accept':'application/vnd.github.v3+json'}});
+      if(listRes.ok){
+        const arr=await listRes.json();
+        const files=(Array.isArray(arr)?arr:[arr]).filter(e=>e && e.type==='file' && e.sha);
+        for(const f of files){
+          const del=await ghApi('DELETE', `/repos/${repo}/contents/${encodeURIComponent(f.path).replace(/%2F/g,'/')}`,
+            token, {message:`Delete ${id} file ${f.name}`, sha:f.sha, branch});
+          if(del.status===200){ deleted++; $('#gh-log').textContent+=`[del] ${f.path}\n`; }
+          else $('#gh-log').textContent+=`[del] FAIL ${f.path}: ${del.status} ${String(del.text||'').slice(0,200)}\n`;
+        }
+        $('#gh-log').textContent+=`[github] deleted ${deleted} file(s) from capes/${id}/\n`;
+      } else {
+        // try static single file: capes/{id}.png
+        const one=await ghApi('GET', `/repos/${repo}/contents/capes/${id}.png?ref=${branch}`, token);
+        if(one.status===200 && one.data && one.data.sha){
+          const del=await ghApi('DELETE', `/repos/${repo}/contents/capes/${id}.png`,
+            token, {message:`Delete ${id} static cape`, sha:one.data.sha, branch});
+          if(del.status===200){ deleted++; $('#gh-log').textContent+=`[github] deleted capes/${id}.png\n`; }
+          else $('#gh-log').textContent+=`[github] FAIL: ${del.status} ${String(del.text||'').slice(0,200)}\n`;
+        } else $('#gh-log').textContent+=`[github] nothing found under capes/${id} (status ${listRes.status})\n`;
+      }
+      // optional preview delete
+      const delPrev=document.getElementById('del-preview');
+      if(delPrev && delPrev.checked){
+        try{
+          const postRepo=$('#post-repo').value.trim()||'SoulTeams/Post-Images';
+          const capName=id.charAt(0).toUpperCase()+id.slice(1).replace(/-/g,'');
+          const pp=`${capName}.png`;
+          const one=await ghApi('GET', `/repos/${postRepo}/contents/${encodeURIComponent(pp)}?ref=main`, token);
+          if(one.status===200 && one.data && one.data.sha){
+            const del=await ghApi('DELETE', `/repos/${postRepo}/contents/${encodeURIComponent(pp)}`,
+              token, {message:`Delete ${id} preview`, sha:one.data.sha, branch:'main'});
+            $('#gh-log').textContent+= (del.status===200) ? `[post-images] deleted ${pp}\n` : `[post-images] FAIL ${del.status}\n`;
+          } else $('#gh-log').textContent+=`[post-images] no preview ${pp} found\n`;
+        }catch(e){ $('#gh-log').textContent+=`[post-images] error ${e}\n`; }
+      }
+    }catch(e){ $('#gh-log').textContent+=`[github] error ${e}\n`; }
+  }
+  // Firebase catalog delete (open rules, no auth needed)
+  try{
+    const r=await fetch(`${base}/capes/catalog/${id}.json`,{method:'DELETE'});
+    const t=await r.text();
+    $('#fb-log').textContent+=`\n[delete] ${id} -> ${r.status} ${t.slice(0,200)}`;
+    if(r.ok){ $('#fb-log').textContent+=`\n[ok] removed from catalog`; loadCatalog(); }
+  }catch(e){ $('#fb-log').textContent+=`\n[delete] error ${e}`; }
+}
+
+function ecoCoinTag(v){
+  const coins = (v && v.coins !== undefined && v.coins !== null) ? Number(v.coins) : Math.round(Number(v && v.price) || 0);
+  return coins + (coins === 1 ? ' coin' : ' coins');
+}
+// ---------- Soul Coins: builder wallet ----------
+// Publishing to the store's catalog is paid in Soul Coins from a Soul account.
+const BUILDER_PUBLISH_COST = 250;
+let builderUser = null;
+let builderBal = null;
+let builderBalRef = null;
+function ecoKeyFor(u) { return u && u.uid ? 'soul_' + String(u.uid).replace(/[.$#\[\]\/]/g, '_') : null; }
+function updateBuilderAcctUI(){
+  const box=document.getElementById('bldr-acct');
+  const cost=document.getElementById('bldr-cost');
+  if(cost) cost.textContent=String(BUILDER_PUBLISH_COST);
+  if(!box) return;
+  if(builderUser){
+    box.innerHTML=`<b class="mono">${builderUser.email||builderUser.uid}</b><br>
+      <span class="mono" style="color:var(--muted);font-size:11px;">Wallet: ${ecoKeyFor(builderUser)} &middot; Balance: <b style="color:var(--ok)">${builderBal===null?'â€¦':builderBal.toLocaleString()}</b> Coins</span>
+      <div style="margin-top:8px"><button class="btn btn-ghost" onclick="builderLogout()">Logout</button></div>`;
+  } else {
+    box.innerHTML=`<div class="row"><input id="bldr-email" placeholder="Soul account email"></div>
+      <div class="row" style="margin-top:6px"><input id="bldr-pass" type="password" placeholder="Password"></div>
+      <div style="margin-top:10px"><button class="btn btn-ghost" onclick="builderLogin()">Sign in with Soul account</button></div>`;
+  }
+}
+window.builderLogin = async () => {
+  try{
+    const em=document.getElementById('bldr-email').value.trim();
+    const pw=document.getElementById('bldr-pass').value;
+    if(!em||!pw){ alert('Enter your Soul account email and password.'); return; }
+    await firebase.auth().signInWithEmailAndPassword(em, pw);
+    fbToast('[coins] Soul account signed in.');
+  }catch(e){ alert('Soul login failed: ' + (e.message||e)); }
+};
+window.builderLogout = async () => { try { await firebase.auth().signOut(); } catch (e) {} };
+async function builderSpendPublish(itemId, itemName){
+  const u = firebase.auth().currentUser; if(!u) throw new Error('NOT_LOGGED_IN');
+  const key = ecoKeyFor(u); const d = firebase.database(); if(!d) throw new Error('NO_DB');
+  let ok = true;
+  await d.ref(`soul_coins/${key}/balance`).transaction(cur => {
+    const c = Number(cur) || 0;
+    if (c < BUILDER_PUBLISH_COST) { ok = false; return c; }
+    return c - BUILDER_PUBLISH_COST;
+  });
+  if (!ok) throw new Error('INSUFFICIENT');
+  await d.ref(`soul_coins/${key}`).update({ updatedAt: Date.now() }).catch(()=>{});
+  const logRef = d.ref(`coins_log/${key}`).push();
+  await logRef.set({ type:'spend', amount:BUILDER_PUBLISH_COST, balanceAfter:(Number(builderBal)||0)-BUILDER_PUBLISH_COST, itemId: itemId||'', itemName: itemName||'', source:'builder-publish', at: Date.now() }).catch(()=>{});
+}
+try {
+  if (!firebase.apps.length) firebase.initializeApp({ apiKey:"AIzaSyCAalZXTgdIg58oip1Ang5CJVPRdp9YzzQ", authDomain:"soul-backend.firebaseapp.com", databaseURL:"https://soul-backend-default-rtdb.firebaseio.com", projectId:"soul-backend", storageBucket:"soul-backend.firebasestorage.app", messagingSenderId:"553383169433", appId:"1:553383169433:web:03aa34c90ebda216169708" });
+  firebase.auth().onAuthStateChanged(u => {
+    builderUser = u;
+    if (u) {
+      if (builderBalRef) try { builderBalRef.off(); } catch(_){}
+      builderBalRef = firebase.database().ref(`soul_coins/${ecoKeyFor(u)}/balance`);
+      builderBalRef.on('value', s => { builderBal = Number(s.val())||0; updateBuilderAcctUI(); });
+    } else { builderBal = null; }
+    updateBuilderAcctUI();
+  });
+} catch (e) { console.warn('Builder coins init failed:', e); }
+
+// init
+onAnimatedToggle();
+onIdInput();
+updateButtons();
+</script>
+</body>
+</html>
