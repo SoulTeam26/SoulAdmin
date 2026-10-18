@@ -1411,6 +1411,8 @@
         <div class="nav-item" data-target="view-releases"><i class="fa-solid fa-cloud-arrow-down"></i> Releases</div>
         <div class="nav-item" data-target="view-preview"><i class="fa-solid fa-images"></i> Preview</div>
         <div class="nav-item" data-target="view-client-preview"><i class="fa-solid fa-eye"></i> Client Preview</div>
+        <div class="nav-item" id="nav-cape-builder" data-target="view-cape-builder" style="display:none;"><i class="fa-solid fa-flag"></i> Cape Builder</div>
+        <div class="nav-item" id="nav-shield-builder" data-target="view-shield-builder" style="display:none;"><i class="fa-solid fa-shield-halved"></i> Shield Builder</div>
 
         <div class="nav-footer">
             <div class="nav-cta" id="btn-back-home"><i class="fa-solid fa-arrow-left"></i> Back to Home</div>
@@ -1674,7 +1676,7 @@
             <div class="admin-section">
                 <div class="section-title"><i class="fa-solid fa-plus"></i> Add New Ad</div>
                 <div class="input-group"><label>Image URL</label><input type="text" id="ad-image-url" placeholder="https://example.com/ad-banner.png"></div>
-                <div class="input-group"><label>Video URL (optional ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â plays instead of image)</label><input type="text" id="ad-video-url" placeholder="https://example.com/ad-video.mp4"></div>
+                <div class="input-group"><label>Video URL (optional Ã¢â‚¬â€ plays instead of image)</label><input type="text" id="ad-video-url" placeholder="https://example.com/ad-video.mp4"></div>
                 <div class="input-group"><label>Click Redirect URL</label><input type="text" id="ad-redirect-url" placeholder="https://example.com/landing"></div>
                 <div class="input-group"><label>Duration (days, 0 = never expires)</label><input type="number" id="ad-duration" value="30" min="0" style="width:120px;"></div>
                 <button id="btn-add-ad">Add Ad</button>
@@ -1752,7 +1754,7 @@
                     </div>
                     <div class="input-group"><label>Texture Path</label><input type="text" id="cos-texture" placeholder="textures/capes/cape-axolotl.png"></div>
                 </div>
-                <div class="input-group"><label>Icon Image URL (optional ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â shows in the website store & admin cards)</label><input type="text" id="cos-icon" placeholder="https://example.com/cape-icon.png" oninput="updateCapeIconPreview()"></div>
+                <div class="input-group"><label>Icon Image URL (optional Ã¢â‚¬â€ shows in the website store & admin cards)</label><input type="text" id="cos-icon" placeholder="https://example.com/cape-icon.png" oninput="updateCapeIconPreview()"></div>
                 <div style="margin:20px 0;">
                     <label style="display:block;margin-bottom:10px;font-size:12px;text-transform:uppercase;color:var(--gray4);font-weight:700;">Icon Preview</label>
                     <div id="cos-icon-preview" style="max-width:320px;">
@@ -1875,7 +1877,7 @@
                     <div class="input-group"><label>Server IP</label><input type="text" id="ps-ip" placeholder="e.g. mc.hypixel.net"></div>
                 </div>
                 <div class="input-group"><label>Description</label><textarea id="ps-desc" rows="2" placeholder="e.g. The largest Minecraft server"></textarea></div>
-                <div class="input-group"><label>Custom Icon URL (optional ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â leave blank to auto-fetch from server)</label><input type="text" id="ps-icon" placeholder="https://example.com/icon.png"></div>
+                <div class="input-group"><label>Custom Icon URL (optional Ã¢â‚¬â€ leave blank to auto-fetch from server)</label><input type="text" id="ps-icon" placeholder="https://example.com/icon.png"></div>
                 <button id="btn-add-partnered-server"><i class="fa-solid fa-plus"></i> Add Server</button>
             </div>
             <div class="admin-section">
@@ -1900,7 +1902,7 @@
                     </div>
                 </div>
                 <div class="input-group"><label>Download URL</label><input type="text" id="release-url" placeholder="https://github.com/you/zudo-launcher/releases/download/v1.0.13/Zudo-Setup.exe"></div>
-                <div class="input-group"><label>Release Notes (supports Markdown ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Improvements, Fixes, etc.)</label><textarea id="release-notes" rows="6" placeholder="**Improvements:**&#10;- Faster skin search&#10;&#10;**Fixes:**&#10;- Fixed Forge crash on 1.12.2"></textarea></div>
+                <div class="input-group"><label>Release Notes (supports Markdown Ã¢â‚¬â€ Improvements, Fixes, etc.)</label><textarea id="release-notes" rows="6" placeholder="**Improvements:**&#10;- Faster skin search&#10;&#10;**Fixes:**&#10;- Fixed Forge crash on 1.12.2"></textarea></div>
                 <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; font-size:13px; color:var(--gray4); cursor:pointer;">
                     <input type="checkbox" id="release-is-current" style="width:auto;" checked> Mark as current / latest release
                 </label>
@@ -1938,10 +1940,10 @@
                     <div class="input-group"><label>Role</label><input type="text" id="team-role" placeholder="e.g. Owner"></div>
                 </div>
                 <div class="input-group">
-                    <label>Minecraft Username (renders a player head automatically ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â leave blank to use a custom avatar instead)</label>
+                    <label>Minecraft Username (renders a player head automatically Ã¢â‚¬â€ leave blank to use a custom avatar instead)</label>
                     <input type="text" id="team-mcname" placeholder="e.g. Arnav404">
                 </div>
-                <div class="input-group"><label>Custom Avatar URL (optional ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â only used if no Minecraft username is set)</label><input type="text" id="team-avatar" placeholder="https://example.com/avatar.png"></div>
+                <div class="input-group"><label>Custom Avatar URL (optional Ã¢â‚¬â€ only used if no Minecraft username is set)</label><input type="text" id="team-avatar" placeholder="https://example.com/avatar.png"></div>
                 <button id="btn-add-team"><i class="fa-solid fa-plus"></i> Add Member</button>
             </div>
             <div class="admin-section">
@@ -2009,6 +2011,22 @@
             <div class="admin-section">
                 <div class="section-title"><i class="fa-solid fa-list"></i> All Posts</div>
                 <div id="admin-blog-list"></div>
+            </div>
+        </div>
+
+        <!-- CAPE BUILDER (embedded, gated by owner grant) -->
+        <div id="view-cape-builder" class="admin-view">
+            <header><h1>Cape Builder</h1></header>
+            <div class="admin-section">
+                <iframe id="cape-builder-frame" data-src="cape-builder.html" style="width:100%;height:calc(100vh - 140px);min-height:560px;border:0;border-radius:20px;background:#121113;"></iframe>
+            </div>
+        </div>
+
+        <!-- SHIELD BUILDER (embedded, gated by owner grant) -->
+        <div id="view-shield-builder" class="admin-view">
+            <header><h1>Shield Builder</h1></header>
+            <div class="admin-section">
+                <iframe id="shield-builder-frame" data-src="shield-builder.html" style="width:100%;height:calc(100vh - 140px);min-height:560px;border:0;border-radius:20px;background:#121113;"></iframe>
             </div>
         </div>
 
@@ -2149,6 +2167,8 @@
                 if (target === 'view-users') loadUsers();
                 if (target === 'view-posts') loadBlogPosts();
                 if (target === 'view-client-preview') { window.stopCpRotation(); loadCpModules(); }
+                if (target === 'view-cape-builder') lazyBuilderFrame('cape-builder-frame');
+                if (target === 'view-shield-builder') lazyBuilderFrame('shield-builder-frame');
                 if (target === 'view-cosmetics') {
                     const catalogData = await loadBundledCapes();
                     await Promise.all([
@@ -2790,6 +2810,12 @@
         };
 
         // ============ SOUL COINS (grant on support chat) ============
+        // Wallets are keyed by the SECURE ACCOUNT ID ("soul_<uid>" / "ms_<uuid>").
+        // New orders carry order.accountKey; legacy username-keyed orders fall
+        // back to soul_coins/<username> for backwards compatibility.
+        function coinWalletKey(order) {
+            return (order && (order.accountKey || order.username)) || null;
+        }
         async function loadCoinBanner(userId) {
             const banner = document.getElementById('admin-coin-banner');
             if (!banner) return;
@@ -2800,13 +2826,14 @@
             const coins = Number(order.coins) || 0;
             const price = order.price !== undefined ? Number(order.price).toFixed(2) : '?';
             const statusColor = order.status === 'paid' ? '#22c55e' : order.status === 'cancelled' ? '#ef4444' : '#fbbf24';
-            document.getElementById('coin-banner-title').innerHTML = `<img src="soul_coin.png" alt="" style="width:16px;height:16px;vertical-align:-2px;margin-right:6px;"> Soul Coins Order &middot; <span style="color:${statusColor};">${(order.status || 'PENDING').toUpperCase()}</span>`;
+            document.getElementById('coin-banner-title').innerHTML = `<img src="soul_coin.png" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:-2px;margin-right:6px;"> Soul Coins Order &middot; <span style="color:${statusColor};">${(order.status || 'PENDING').toUpperCase()}</span>`;
             let balance = 0;
+            const wKey = coinWalletKey(order);
             try {
-                const bs = await get(ref(db, `soul_coins/${order.username}`));
+                const bs = await get(ref(db, `soul_coins/${wKey}`));
                 balance = Number((bs.val() || {}).balance) || 0;
             } catch (e) {}
-            document.getElementById('coin-banner-detail').innerHTML = `<b>${order.username}</b> &middot; ${coins.toLocaleString()} Coins &middot; $${price} &middot; Current balance: ${balance.toLocaleString()}`;
+            document.getElementById('coin-banner-detail').innerHTML = `<b>${order.username}</b> &middot; ${coins.toLocaleString()} Coins &middot; ₹${price} &middot; Balance: ${balance.toLocaleString()} &middot; <span style="font-family:monospace;opacity:.75;">${wKey || '?'}</span>`;
             const showActions = order.status === 'pending';
             document.getElementById('btn-admin-mark-paid').style.display = showActions ? '' : 'none';
             document.getElementById('btn-admin-cancel-coin').style.display = showActions ? '' : 'none';
@@ -2819,14 +2846,20 @@
             const order = snap.val();
             if (!order) return alert('Coin order not found.');
             const coins = Number(order.coins) || 0;
-            const balSnap = await get(ref(db, `soul_coins/${order.username}`));
+            const wKey = coinWalletKey(order);
+            if (!wKey) return alert('Order has no wallet key (accountKey/username).');
+            const balSnap = await get(ref(db, `soul_coins/${wKey}`));
             const current = Number((balSnap.val() || {}).balance) || 0;
             const newBalance = current + coins;
+            const logRef = push(ref(db, `coins_log/${wKey}`));
             const updates = {};
-            updates[`soul_coins/${order.username}`] = { balance: newBalance, updatedAt: Date.now() };
+            // nested paths preserve other wallet fields instead of replacing the node
+            updates[`soul_coins/${wKey}/balance`] = newBalance;
+            updates[`soul_coins/${wKey}/updatedAt`] = Date.now();
+            updates[`coins_log/${wKey}/${logRef.key}`] = { type: 'credit', amount: coins, balanceAfter: newBalance, at: Date.now(), source: 'admin-paid-order', orderId: orderKey };
             updates[`coin_orders/${orderKey}/status`] = 'paid';
             updates[`coin_orders/${orderKey}/paidAt`] = Date.now();
-            updates[`support_tickets/${orderKey}/lastMessage`] = `Paid ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${coins.toLocaleString()} Soul Coins granted to ${order.username}`;
+            updates[`support_tickets/${orderKey}/lastMessage`] = `Paid Ã¢â‚¬â€ ${coins.toLocaleString()} Soul Coins granted to ${order.username}`;
             updates[`support_tickets/${orderKey}/timestamp`] = Date.now();
             // Only write the chat message if a real ticket exists for this order.
             const coinTicketSnap = await get(ref(db, `support_tickets/${orderKey}`));
@@ -3115,7 +3148,7 @@
                     <div style="flex:1; min-width:0;">
                         <div style="font-size:12px; opacity:0.7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${ad.image}</div>
                         ${ad.videoUrl ? `<div style="font-size:11px; opacity:0.6;"><i class="fa-solid fa-video"></i> ${ad.videoUrl}</div>` : ''}
-                        <div style="font-size:11px; opacity:0.5;">ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ${ad.redirect}</div>
+                        <div style="font-size:11px; opacity:0.5;">Ã¢â€ â€™ ${ad.redirect}</div>
                         <div style="font-size:10px; margin-top:2px; ${ad.expired ? 'color:#ef4444;' : remaining !== null && remaining <= 3 ? 'color:#f59e0b;' : 'color:#22c55e;'}">${ad.expired ? 'EXPIRED' : remaining !== null ? `${remaining} day(s) left` : 'Never expires'}</div>
                     </div>
                     <button class="button-secondary" onclick="deleteAd('${ad.key}')" style="flex-shrink:0;"><i class="fa-solid fa-trash"></i></button>
@@ -4145,7 +4178,7 @@
                             ${c.price > 0 ? `<span class="release-current" style="background:rgba(251,191,36,0.15);color:#fbbf24;">$${Number(c.price).toFixed(2)} USD</span>` : ''}
                             ${c.animated ? '<span class="release-current" style="background:rgba(251,191,36,0.15);color:#fbbf24;">ANIMATED</span>' : ''}
                             <div class="release-meta">${c.texture || 'No texture'}</div>
-                            ${c.icon ? `<div class="release-meta"><i class="fa-solid fa-image"></i> ${c.icon}</div>` : '<div class="release-meta" style="opacity:0.4;">No icon ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â falls back to Capes/' + c.id + '.png</div>'}
+                            ${c.icon ? `<div class="release-meta"><i class="fa-solid fa-image"></i> ${c.icon}</div>` : '<div class="release-meta" style="opacity:0.4;">No icon Ã¢â‚¬â€ falls back to Capes/' + c.id + '.png</div>'}
                             ${c.animated ? `<div class="release-meta">Frames: ${c.frameCount || 2} @ ${c.frameDelayMs || 250}ms</div>` : ''}
                             <div class="release-meta">${c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}</div>
                         </div>
@@ -5517,6 +5550,47 @@ function generateCode() {
             el.style.borderColor = ok ? 'var(--bolt)' : '#ef4444';
             el.style.color = ok ? 'var(--bolt)' : '#ef4444';
         }
+        // ============ BUILDER ACCESS (owner grants per staff member at staff/{key}/tools) ============
+        // Builder tool iframes load only on first open. Probes the sibling path first,
+        // falls back to ./Admin/... if the panel is hosted at the site root.
+        async function lazyBuilderFrame(frameId) {
+            const f = document.getElementById(frameId);
+            if (!f) return;
+            let src = f.dataset ? f.dataset.src : '';
+            if (!src || f.getAttribute('src')) return;
+            if (location.protocol !== 'file:') {
+                try { const r = await fetch(src, { method: 'HEAD' }); if (!r.ok) src = 'Admin/' + src; }
+                catch (e) { src = 'Admin/' + src; }
+            }
+            f.setAttribute('src', src);
+        }
+        function applyBuilderTools(tools) {
+            const cape = !!(tools && tools.cape_builder);
+            const shield = !!(tools && tools.shield_builder);
+            const nc = document.getElementById('nav-cape-builder');
+            const ns = document.getElementById('nav-shield-builder');
+            if (nc) nc.style.display = cape ? '' : 'none';
+            if (ns) ns.style.display = shield ? '' : 'none';
+            // If access was revoked while the tool was open, drop back to the dashboard.
+            [['view-cape-builder', cape], ['view-shield-builder', shield]].forEach(([viewId, allowed]) => {
+                const view = document.getElementById(viewId);
+                if (view && view.classList.contains('active') && !allowed) {
+                    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+                    document.querySelectorAll('.admin-view').forEach(v => v.classList.remove('active'));
+                    const dash = document.getElementById('view-dashboard');
+                    if (dash) dash.classList.add('active');
+                    const dashNav = document.querySelector('.nav-item[data-target="view-dashboard"]');
+                    if (dashNav) dashNav.classList.add('active');
+                }
+            });
+        }
+        let _builderToolsWatched = false;
+        function watchBuilderTools(key) {
+            if (!key) { applyBuilderTools(null); return; }
+            if (_builderToolsWatched) return;
+            _builderToolsWatched = true;
+            onValue(ref(db, 'staff/' + key + '/tools'), snap => applyBuilderTools(snap.val() || {}));
+        }
         function enterStaffPanel(entry) {
             staffShowOverlay(false);
             // Replies from the staff panel send as the logged-in staff member (shown on the website), not "Administrator"
@@ -5532,6 +5606,9 @@ function generateCode() {
                 document.getElementById('btn-staff-logout').onclick = () => { staffClearSession(); location.reload(); };
             }
             document.title = 'Soul Staff - ' + entry.username;
+            // Owner always has both builders; other staff only see what the owner granted (live-updated).
+            if ((entry.role || 'Staff') === 'Owner') { applyBuilderTools({ cape_builder: true, shield_builder: true }); }
+            else { watchBuilderTools(entry.key); }
         }
         let _staffPollTimer = null;
         function staffStopPoll() { if (_staffPollTimer) { clearInterval(_staffPollTimer); _staffPollTimer = null; } }
