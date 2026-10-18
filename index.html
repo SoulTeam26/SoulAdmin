@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soul Client - Admin Panel</title>
+    <title>Soul Client - Staff Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
     <style>
@@ -552,6 +552,24 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
+
+        /* STAFF LOGIN (staff panel only - owner panel has no login) */
+        #staff-auth-overlay { position: fixed; inset: 0; z-index: 90000; display: flex; align-items: center; justify-content: center; background: rgba(10,9,9,0.88); backdrop-filter: blur(8px); padding: 20px; }
+        .staff-auth-card { width: 100%; max-width: 430px; background: var(--gray1); border: 1px solid var(--glass-border); border-radius: 24px; padding: 30px; max-height: 92vh; overflow-y: auto; }
+        .staff-auth-sub { color: var(--gray4); font-size: 13px; margin-bottom: 18px; line-height: 1.5; }
+        .staff-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+        .staff-tabs button { flex: 1; background: transparent; border: 1px solid var(--glass-border); color: var(--gray4); padding: 10px; border-radius: 10px; text-transform: none; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0; }
+        .staff-tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .staff-tabs button:hover { transform: none; }
+        .staff-remember { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gray4); margin-bottom: 16px; cursor: pointer; }
+        .staff-remember input { width: auto; accent-color: var(--accent); }
+        .staff-msg { display: none; margin-top: 14px; }
+        #pane-login > button, #pane-signup > button { width: 100%; }
+        .staff-wait-user { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin: 12px 0; }
+        #staff-user-chip { display: none; align-items: center; gap: 10px; background: var(--gray2); border: 1px solid var(--glass-border); border-radius: 14px; padding: 10px 12px; margin-bottom: 16px; }
+        #staff-user-chip img { width: 32px; height: 32px; border-radius: 8px; }
+        #staff-user-chip .chip-role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800; color: var(--accent); }
+        #staff-user-chip button { margin-left: auto; padding: 8px 12px; font-size: 12px; }
 
         /* STAFF ACCESS */
         #staff-pending-list, #staff-active-list { display: flex; flex-direction: column; gap: 12px; }
@@ -1336,11 +1354,42 @@
 </head>
 <body>
     <div class="bg-scene"></div>
+    <div id="staff-auth-overlay">
+        <div class="staff-auth-card">
+            <div class="brand" style="margin-bottom:6px;"><i class="fa-solid fa-shield-halved"></i><span class="brand-name">SOUL STAFF</span></div>
+            <p class="staff-auth-sub">Staff access only. <b>Sign up once</b> - the owner approves you, then you log in. Tick <b>Remember me</b> to stay logged in on this device until you log out.</p>
+            <div class="staff-tabs">
+                <button id="tab-login" class="active" type="button">Login</button>
+                <button id="tab-signup" type="button">Sign up</button>
+            </div>
+            <div id="pane-login">
+                <div class="input-group"><label>Username</label><input type="text" id="staff-login-user" placeholder="Your staff username" autocomplete="username"></div>
+                <div class="input-group"><label>Password</label><input type="password" id="staff-login-pass" placeholder="Password" autocomplete="current-password"></div>
+                <label class="staff-remember"><input type="checkbox" id="staff-login-remember" checked> Remember me (stay logged in until logout)</label>
+                <button id="btn-staff-login" type="button">Login</button>
+                <div class="info-box staff-msg" id="staff-login-msg"></div>
+            </div>
+            <div id="pane-signup" style="display:none;">
+                <div class="input-group"><label>Pick a username</label><input type="text" id="staff-signup-user" placeholder="Letters, numbers, underscore" autocomplete="username"></div>
+                <div class="input-group"><label>Pick a password</label><input type="password" id="staff-signup-pass" placeholder="Min. 4 characters" autocomplete="new-password"></div>
+                <div class="input-group"><label>Minecraft Username (optional - shows your head)</label><input type="text" id="staff-signup-mc" placeholder="e.g. Arnav404"></div>
+                <label class="staff-remember"><input type="checkbox" id="staff-signup-remember" checked> Remember me after approval</label>
+                <button id="btn-staff-signup" type="button">Request access</button>
+                <div class="info-box staff-msg" id="staff-signup-msg"></div>
+            </div>
+            <div id="pane-waiting" style="display:none;">
+                <div class="info-box" style="border-color:var(--bolt);color:var(--bolt);">Request sent. The owner has to approve you <b>once</b>. This page checks automatically - once approved you are logged straight in.</div>
+                <div class="staff-wait-user" id="staff-wait-user"></div>
+                <button class="button-secondary" id="btn-staff-cancel-req" type="button" style="width:100%;">Cancel request</button>
+            </div>
+        </div>
+    </div>
     <aside class="sidebar">
         <div class="brand">
             <i class="fa-solid fa-shield-halved"></i>
-            <span class="brand-name">SOUL ADMIN</span>
+            <span class="brand-name">SOUL STAFF</span>
         </div>
+        <div id="staff-user-chip"></div>
 
         <div class="nav-section">General</div>
         <div class="nav-item active" data-target="view-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</div>
@@ -1353,7 +1402,6 @@
         <div class="nav-item" data-target="view-support"><i class="fa-solid fa-comments"></i> Support</div>
         <div class="nav-item" data-target="view-jobs"><i class="fa-solid fa-briefcase"></i> Jobs</div>
         <div class="nav-item" data-target="view-team"><i class="fa-solid fa-user-group"></i> Team</div>
-        <div class="nav-item" data-target="view-staff"><i class="fa-solid fa-key"></i> Staff <span id="staff-pending-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;">0</span></div>
         <div class="nav-item" data-target="view-users"><i class="fa-solid fa-users"></i> Users</div>
 
         <div class="nav-section">Client</div>
@@ -1363,8 +1411,8 @@
         <div class="nav-item" data-target="view-releases"><i class="fa-solid fa-cloud-arrow-down"></i> Releases</div>
         <div class="nav-item" data-target="view-preview"><i class="fa-solid fa-images"></i> Preview</div>
         <div class="nav-item" data-target="view-client-preview"><i class="fa-solid fa-eye"></i> Client Preview</div>
-        <div class="nav-item" data-target="view-cape-builder"><i class="fa-solid fa-flag"></i> Cape Builder</div>
-        <div class="nav-item" data-target="view-shield-builder"><i class="fa-solid fa-shield-halved"></i> Shield Builder</div>
+        <div class="nav-item" id="nav-cape-builder" data-target="view-cape-builder" style="display:none;"><i class="fa-solid fa-flag"></i> Cape Builder</div>
+        <div class="nav-item" id="nav-shield-builder" data-target="view-shield-builder" style="display:none;"><i class="fa-solid fa-shield-halved"></i> Shield Builder</div>
 
         <div class="nav-footer">
             <div class="nav-cta" id="btn-back-home"><i class="fa-solid fa-arrow-left"></i> Back to Home</div>
@@ -1899,56 +1947,10 @@
                 <button id="btn-add-team"><i class="fa-solid fa-plus"></i> Add Member</button>
             </div>
             <div class="admin-section">
-                <div class="section-title"><i class="fa-solid fa-money-bill-wave"></i> Staff Salary (Soul Coins)</div>
-                <p style="font-size:13px;color:var(--gray4);margin-bottom:16px;">Pay Soul Coins to team members only. Their wallet is matched by the name on their Soul/Microsoft account (or paste a wallet key below). Credits their wallet instantly and writes an audit entry.</p>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                    <div class="input-group">
-                        <label>Team Member</label>
-                        <select id="salary-member" style="width:100%;background:var(--black);border:1px solid var(--glass-border);border-radius:12px;padding:12px 16px;color:white;">
-                            <option value="">Select a team member…</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Amount (Soul Coins)</label>
-                        <input type="number" id="salary-amount" min="1" step="1" placeholder="e.g. 500">
-                    </div>
-                </div>
-                <div class="input-group"><label>Note (optional — e.g. "Weekly salary, Oct W3")</label><input type="text" id="salary-note" placeholder="Staff salary"></div>
-                <div class="input-group"><label>Wallet key override (optional — only when the wallet is named differently, e.g. soul_ABC… or ms_ABC…)</label><input type="text" id="salary-key-override" placeholder="Leave blank to auto-match by name"></div>
-                <button id="btn-pay-salary"><i class="fa-solid fa-money-bill-wave"></i> Pay Salary</button>
-            </div>
-            <div class="admin-section">
-                <div class="section-title"><i class="fa-solid fa-receipt"></i> Recent Salary Payments</div>
-                <div id="admin-salary-list"><p style="opacity:0.5;">No salary payments yet.</p></div>
-            </div>
-            <div class="admin-section">
                 <div class="section-title"><i class="fa-solid fa-user-group"></i> Current Team</div>
                 <div id="admin-team-list"><p style="opacity:0.5;">No team members yet.</p></div>
             </div>
         </div>
-
-        <!-- STAFF-MANAGE-START -->
-        <div id="view-staff" class="admin-view">
-            <header><h1>Staff Access</h1></header>
-            <div class="info-box">Staff members sign up <b>once</b> at <b>staff-admin.html</b> (same folder as this file). Their request lands below as <b>pending</b> - approve it once with a role, or deny it. Approving creates their login and adds them to <b>Team</b>, so the role also shows on Soul Web. Changing a role here updates Soul Web too. <b>Remove</b> logs them out everywhere and removes them from the website.</div>
-            <div class="admin-section" style="margin-top:20px;">
-                <div class="section-title"><i class="fa-solid fa-inbox"></i> Pending Requests <span id="staff-pending-count" style="font-size:13px;color:var(--accent);"></span></div>
-                <div id="staff-pending-list"><p style="opacity:0.5;">Loading requests...</p></div>
-            </div>
-            <div class="admin-section">
-                <div class="section-title"><i class="fa-solid fa-users-gear"></i> Active Staff</div>
-                <div id="staff-active-list"><p style="opacity:0.5;">Loading staff...</p></div>
-            </div>
-            <div class="admin-section">
-                <div class="section-title"><i class="fa-solid fa-palette"></i> Role Badges</div>
-                <div class="info-box">Each role gets its own colored badge on Soul Web (team cards, chats, ticket list). Custom roles get an automatic unique color. Change a color to override it, or reset everything back to defaults.</div>
-                <div id="staff-badge-list" style="display:flex;flex-direction:column;gap:10px;margin-top:16px;"><p style="opacity:0.5;">Loading badges...</p></div>
-                <div class="action-row" style="margin-top:16px;">
-                    <button class="button-secondary" onclick="resetBadgeColors()">Reset default colors</button>
-                </div>
-            </div>
-        </div>
-        <!-- STAFF-MANAGE-END -->
 
         <!-- USERS -->
         <div id="view-users" class="admin-view">
@@ -2012,7 +2014,7 @@
             </div>
         </div>
 
-        <!-- CAPE BUILDER (embedded standalone tool) -->
+        <!-- CAPE BUILDER (embedded, gated by owner grant) -->
         <div id="view-cape-builder" class="admin-view">
             <header><h1>Cape Builder</h1></header>
             <div class="admin-section">
@@ -2020,7 +2022,7 @@
             </div>
         </div>
 
-        <!-- SHIELD BUILDER (embedded standalone tool) -->
+        <!-- SHIELD BUILDER (embedded, gated by owner grant) -->
         <div id="view-shield-builder" class="admin-view">
             <header><h1>Shield Builder</h1></header>
             <div class="admin-section">
@@ -2552,10 +2554,10 @@
             alert('Broadcast sent!');
         };
 
-        // Admin identity (owner panel replies send as Administrator with the Owner badge)
+        // Admin identity (staff panel replies send as the logged-in member with their role badge)
         let adminName = 'Administrator';
         let adminAvatar = '';
-        let adminRole = 'Owner';
+        let adminRole = 'Staff'; // replaced with the member's role on login
 
         // SUPPORT LOGIC
         let selectedUserId = null;
@@ -3562,90 +3564,16 @@
             const entries = Object.entries(data).map(([key, t]) => ({ key, ...t }));
             entries.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 
-            // Wallet resolution: match by wallet "name", then fall back to the
-            // USERS registry (real Firebase Soul accounts only — a wallet node
-            // is auto-created the first time salary/coins land in it).
-            let wallets = {};
-            try {
-                const ws = await get(ref(db, 'soul_coins'));
-                wallets = ws.val() || {};
-            } catch (e) {}
-            let usersSnap = {};
-            try {
-                const us = await get(ref(db, 'users'));
-                usersSnap = us.val() || {};
-            } catch (e) {}
-            const want = (v) => String(v || '').trim().toLowerCase();
-            const findWallet = (nm) => {
-                const w = want(nm);
-                if (!w) return null;
-                return Object.keys(wallets)
-                    .filter(k => String((wallets[k] || {}).name || '').trim().toLowerCase() === w)
-                    .sort((a, b) => (a.startsWith('soul_') ? 0 : 1) - (b.startsWith('soul_') ? 0 : 1))[0] || null;
-            };
-            const registryHits = (t) => Object.keys(usersSnap).filter(uid => {
-                // Real Firebase UIDs only — "off-..." launcher IDs and raw UUID
-                // presence keys are NOT verified accounts and never get wallets.
-                if (String(uid).startsWith('off-') || /^[0-9a-f]{32}$/i.test(String(uid))) return false;
-                const u = usersSnap[uid] || {};
-                const names = [u.minecraftUsername, u.name, u.username, u.displayName, (u.email || '').split('@')[0]];
-                return names.some(n => n && (want(n) === want(t.name) || (t.mcname && want(n) === want(t.mcname))));
-            });
-            const resolveMember = (t) => {
-                // The owner's saved pick always wins (written from the card select).
-                const saved = (typeof t.walletKey === 'string') ? t.walletKey.trim() : '';
-                // 1. Every wallet node named after the member (Soul accounts first).
-                const nameWanted = [t.name, t.mcname].map(want).filter(Boolean);
-                const nameKeys = Object.keys(wallets).filter(k => {
-                    const wn = want((wallets[k] || {}).name);
-                    return wn && nameWanted.some(w => wn === w);
-                }).sort((a, b) => (a.startsWith('soul_') ? 0 : 1) - (b.startsWith('soul_') ? 0 : 1));
-                const hits = registryHits(t);
-                // 2. Candidate list = name-matched wallets + users-registry Soul accounts.
-                const candidates = [...nameKeys, ...hits.map(h => 'soul_' + h)]
-                    .filter((k, i, arr) => arr.indexOf(k) === i)
-                    .map(k => {
-                        const isSoul = k.startsWith('soul_');
-                        const u = isSoul ? (usersSnap[k.slice(5)] || {}) : {};
-                        const detail = u.minecraftUsername || u.name || ((u.email || '').split('@')[0]) || (wallets[k] || {}).name || '';
-                        return { key: k, label: `${isSoul ? 'Soul' : 'Microsoft'}${detail ? ' · ' + detail : ''}` };
-                    });
-                if (candidates.length === 1) {
-                    const key = candidates[0].key;
-                    return nameKeys.includes(key)
-                        ? { key, note: 'wallet', balance: Number((wallets[key] || {}).balance) || 0 }
-                        : { key, note: 'account' };
-                }
-                if (candidates.length > 1) return { note: 'multi', candidates, saved };
-                return { key: null, note: 'none' };
-            };
-
             if (entries.length === 0) {
                 list.innerHTML = '<p style="opacity:0.5;">No team members yet.</p>';
-            } else {
-                list.innerHTML = entries.map(t => {
-                    const avatar = t.mcname
-                        ? `https://minotar.net/helm/${encodeURIComponent(t.mcname)}/64.png`
-                        : (t.avatar || `https://minotar.net/helm/MHF_Question/64.png`);
-                    const res = resolveMember(t);
-                    let balHtml;
-                    if (res.note === 'wallet') {
-                        const bal = Number((wallets[res.key] || {}).balance) || 0;
-                        balHtml = `<div style="font-size:12px;margin-top:4px;color:var(--bolt);font-weight:700;"><i class="fa-solid fa-coins"></i> ${bal.toLocaleString()} coins</div>`
-                            + `<div style="font-size:10px;opacity:.45;font-family:monospace;">${escHtml(res.key)}</div>`;
-                    } else if (res.note === 'account') {
-                        balHtml = `<div style="font-size:11px;margin-top:4px;color:#60a5fa;font-weight:600;"><i class="fa-solid fa-circle-check"></i> Soul account verified — wallet auto-creates on first pay</div>`
-                            + `<div style="font-size:10px;opacity:.45;font-family:monospace;">${escHtml(res.key)}</div>`;
-                    } else if (res.note === 'multi') {
-                        const opts = ['<option value="">— pick the account salaries go to —</option>']
-                            .concat(res.candidates.map(c => `<option value="${escHtml(c.key)}" ${res.saved === c.key ? 'selected' : ''}>${escHtml(c.label)}</option>`)).join('');
-                        balHtml = `<div style="font-size:11px;margin-top:4px;color:#f59e0b;font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> ${res.candidates.length} accounts matched ${res.saved ? '— account picked ✔' : '— pick one'}</div>`
-                            + `<select onchange="saveTeamWalletPick('${t.key}', this.value)" style="width:100%;margin-top:6px;background:var(--black);border:1px solid var(--glass-border);border-radius:10px;color:white;font-size:11px;padding:8px 10px;font-family:monospace;">${opts}</select>`
-                            + (res.saved ? `<div style="font-size:10px;opacity:.45;font-family:monospace;margin-top:4px;">${escHtml(res.saved)}</div>` : '');
-                    } else {
-                        balHtml = `<div style="font-size:11px;opacity:.4;margin-top:4px;">no verified account yet — pays need an override key</div>`;
-                    }
-                    return `
+                return;
+            }
+
+            list.innerHTML = entries.map(t => {
+                const avatar = t.mcname
+                    ? `https://minotar.net/helm/${encodeURIComponent(t.mcname)}/64.png`
+                    : (t.avatar || `https://minotar.net/helm/MHF_Question/64.png`);
+                return `
                 <div class="team-card">
                     <div style="position:absolute;top:8px;right:8px;display:flex;gap:6px;">
                         <button class="btn-delete" onclick="editTeamMember('${t.key}')" style="background:rgba(59,130,246,0.9);position:static;" title="Edit"><i class="fa-solid fa-pen"></i></button>
@@ -3659,26 +3587,8 @@
                         </div>
                     </div>
                     ${t.mcname ? `<div style="font-size:11px; opacity:0.5;">MC: ${t.mcname}</div>` : ''}
-                    ${balHtml}
                 </div>
             `}).join('');
-            }
-
-            // Salary dropdown (wallet state shown; selection preserved)
-            const sel = document.getElementById('salary-member');
-            if (sel) {
-                const prev = sel.value;
-                sel.innerHTML = '<option value="">Select a team member…</option>' + entries.map(t => {
-                    const res = resolveMember(t);
-                    let tag;
-                    if (res.note === 'wallet') tag = ' • 💰 ' + (Number((wallets[res.key] || {}).balance) || 0).toLocaleString();
-                    else if (res.note === 'account') tag = ' • wallet on first pay';
-                    else if (res.note === 'multi') tag = t.walletKey ? ' • ✔ account picked' : ' • pick account';
-                    else tag = ' • no account';
-                    return `<option value="${t.key}">${escHtml(t.name)}${t.role ? ' • ' + escHtml(t.role) : ''}${tag}</option>`;
-                }).join('');
-                if (prev && entries.some(t => t.key === prev)) sel.value = prev;
-            }
         }
 
         window.deleteTeamMember = async (key) => {
@@ -3686,142 +3596,6 @@
             if (editingTeamKey === key) cancelEditTeam();
             loadTeam();
         };
-
-        // Owner picked the exact account (Soul or official Microsoft) that this
-        // member's salary goes into. Empty value clears the pick.
-        window.saveTeamWalletPick = async (teamKey, key) => {
-            const val = String(key || '').trim();
-            if (val && !/^[A-Za-z0-9_-]+$/.test(val)) {
-                alert('That is not a valid wallet key.');
-                loadTeam();
-                return;
-            }
-            try {
-                await update(ref(db, 'team/' + teamKey), { walletKey: val || null });
-            } catch (e) {
-                alert('Could not save the pick: ' + (e && e.message ? e.message : e));
-            }
-            loadTeam();
-        };
-
-        // ============ STAFF SALARY (owner pays team members in Soul Coins) ============
-        // Pays only into SECURE account wallets ("soul_<uid>" / "ms_<uuid>") matched
-        // by the wallet's "name". Credits balance + coins_log + staff_salaries audit.
-        window.paySalary = async () => {
-            const sel = document.getElementById('salary-member');
-            const amountEl = document.getElementById('salary-amount');
-            const noteEl = document.getElementById('salary-note');
-            const keyEl = document.getElementById('salary-key-override');
-            const teamKey = sel ? sel.value : '';
-            const amount = Math.floor(Number(amountEl && amountEl.value) || 0);
-            const note = (noteEl && noteEl.value.trim()) || 'staff salary';
-            const override = (keyEl && keyEl.value.trim()) || '';
-            if (!teamKey) return alert('Select a team member.');
-            if (!amount || amount <= 0) return alert('Enter a coin amount above 0.');
-
-            const tSnap = await get(ref(db, 'team/' + teamKey));
-            const member = tSnap.val();
-            if (!member || !member.name) return alert('Team member not found.');
-
-            // Resolve the wallet: manual override first, otherwise match by wallet name.
-            let wKey = null;
-            if (override) {
-                wKey = override;
-                const exists = (await get(ref(db, 'soul_coins/' + wKey))).exists();
-                if (!exists) return alert(`Override wallet key "${wKey}" does not exist in soul_coins. Only pay into existing wallets.`);
-            } else {
-                let wallets = {};
-                try { wallets = (await get(ref(db, 'soul_coins'))).val() || {}; } catch (e) {}
-                const findWallet = (nm) => {
-                    const want = String(nm || '').trim().toLowerCase();
-                    if (!want) return null;
-                    return Object.keys(wallets)
-                        .filter(k => String((wallets[k] || {}).name || '').trim().toLowerCase() === want)
-                        .sort((a, b) => (a.startsWith('soul_') ? 0 : 1) - (b.startsWith('soul_') ? 0 : 1))[0] || null;
-                };
-                // The owner's saved account pick (Team card selector) wins first.
-                const savedPick = (typeof member.walletKey === 'string') ? member.walletKey.trim() : '';
-                if (savedPick && /^[A-Za-z0-9_-]+$/.test(savedPick)) wKey = savedPick;
-                if (!wKey) {
-                    wKey = findWallet(member.name) || findWallet(member.mcname);
-                }
-                if (!wKey) {
-                    // Fall back to the USERS registry: a team member who signed
-                    // up with a Soul account may not have a wallet node yet
-                    // (wallets only appear the first time coins move). Their
-                    // wallet key is deterministic: soul_<FirebaseUID>.
-                    try {
-                        const uSnap = await get(ref(db, 'users'));
-                        const users = uSnap.val() || {};
-                        const want = (v) => String(v || '').trim().toLowerCase();
-                        const hits = Object.keys(users).filter(uid => {
-                            // A real Firebase UID only: skip launcher offline IDs
-                            // ("off-...") and raw UUID keys written by presence
-                            // sync — those are NOT verified Soul accounts and
-                            // must never receive a wallet.
-                            if (uid.startsWith('off-') || /^[0-9a-f]{32}$/i.test(uid)) return false;
-                            const u = users[uid] || {};
-                            const names = [u.minecraftUsername, u.name, u.username, u.displayName, (u.email || '').split('@')[0]];
-                            return names.some(n => {
-                                if (!n) return false;
-                                const w = want(n);
-                                return w === want(member.name) || (member.mcname && w === want(member.mcname));
-                            });
-                        });
-                        if (hits.length === 1) wKey = 'soul_' + hits[0];
-                        else if (hits.length > 1) return alert(`Multiple accounts matched "${member.name}". Open the Team card for ${member.name} and pick which account salaries go to — or paste the exact wallet key in the override box.`);
-                    } catch (e) {}
-                }
-                if (!wKey) {
-                    return alert(`No Soul Coins wallet found for "${member.name}". If they registered a Soul account, the wallet key is soul_<their Firebase UID>. Wallets are created automatically on first salary/coin credit, or paste their key in the override box.`);
-                }
-            }
-
-            const balSnap = await get(ref(db, `soul_coins/${wKey}`));
-            const wallet = balSnap.val() || {};
-            const current = Number(wallet.balance) || 0;
-            if (!confirm(`Pay ${amount.toLocaleString()} Soul Coins salary to ${member.name}?\n\nWallet: ${wKey}${wallet.name ? ' (' + wallet.name + ')' : ''}\nBalance: ${current.toLocaleString()} -> ${(current + amount).toLocaleString()}`)) return;
-
-            const newBal = current + amount;
-            const logRef = push(ref(db, `coins_log/${wKey}`));
-            const salaryRef = push(ref(db, 'staff_salaries'));
-            const at = Date.now();
-            const updates = {};
-            // nested paths preserve other wallet fields instead of replacing the node
-            updates[`soul_coins/${wKey}/balance`] = newBal;
-            updates[`soul_coins/${wKey}/updatedAt`] = at;
-            if (!wallet.name) updates[`soul_coins/${wKey}/name`] = member.name;
-            if (!wallet.accountType) updates[`soul_coins/${wKey}/accountType`] = String(wKey).startsWith('soul_') ? 'soul' : 'microsoft';
-            updates[`coins_log/${wKey}/${logRef.key}`] = { type: 'credit', amount, balanceAfter: newBal, at, source: 'staff-salary', salaryId: salaryRef.key, teamKey, note };
-            updates[`staff_salaries/${salaryRef.key}`] = { teamKey, username: member.name, role: member.role || null, mcname: member.mcname || null, accountKey: wKey, amount, note, at };
-            await update(ref(db), updates);
-
-            amountEl.value = '';
-            if (keyEl) keyEl.value = '';
-            if (noteEl) noteEl.value = '';
-            loadSalaries();
-            loadTeam(); // refreshes the card balances + dropdown amounts
-            alert(`Paid ${amount.toLocaleString()} Soul Coins to ${member.name}. New balance: ${newBal.toLocaleString()}.`);
-        };
-
-        window.loadSalaries = async () => {
-            const list = document.getElementById('admin-salary-list');
-            if (!list) return;
-            const snap = await get(ref(db, 'staff_salaries'));
-            const data = snap.val() || {};
-            const entries = Object.entries(data).map(([key, s]) => ({ key, ...s }))
-                .sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, 15);
-            if (!entries.length) { list.innerHTML = '<p style="opacity:0.5;">No salary payments yet.</p>'; return; }
-            list.innerHTML = entries.map(s => `
-                <div class="post-item">
-                    <div style="flex:1;min-width:200px;">
-                        <div style="font-weight:800;">${escHtml(s.username || s.accountKey || '?')} <span style="opacity:.6;font-size:12px;">+${Number(s.amount).toLocaleString()} coins</span></div>
-                        <div style="font-size:12px;opacity:.6;">${escHtml(s.role || '')}${s.role ? ' &bull; ' : ''}${new Date(s.at || Date.now()).toLocaleString()} &bull; ${escHtml(s.note || 'staff salary')} &bull; <span style="font-family:monospace;">${escHtml(s.accountKey || '')}</span></div>
-                    </div>
-                </div>`).join('');
-        };
-
-        document.getElementById('btn-pay-salary').onclick = () => paySalary();
 
         window.editTeamMember = async (key) => {
             const snap = await get(ref(db, `team/${key}`));
@@ -3917,57 +3691,12 @@
         }
 
         let _staffWatching = false;
-        // Builder tool iframes load only on first open (shared by both admin panels).
-        // Probes the sibling path first, falls back to ./Admin/... if the panel is hosted at the site root.
-        window.soulBuilderB64Text = function(b64) {
-            try {
-                const bin = atob(String(b64).replace(/\s+/g, ''));
-                const bytes = new Uint8Array(bin.length);
-                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-                return new TextDecoder('utf-8').decode(bytes);
-            } catch (e) { return ''; }
-        };
-        // Builder tool iframes load from the EMBEDDED copies (base64 templates at
-        // the bottom of this file) so they work on any host with no extra files.
-        window.lazyBuilderFrame = async function(frameId) {
-            const f = document.getElementById(frameId);
-            if (!f) return;
-            if (f.__builderLoaded) return;
-            const kind = /shield/i.test(frameId) ? 'shield' : 'cape';
-            const tpl = document.getElementById('soul-builder-src-' + kind);
-            if (tpl && String(tpl.textContent).replace(/\s+/g, '').length > 200) {
-                f.__builderLoaded = true;
-                f.setAttribute('srcdoc', window.soulBuilderB64Text(tpl.textContent));
-                return;
-            }
-            // Fallback: legacy external files (still works when served locally).
-            let src = f.dataset ? f.dataset.src : '';
-            if (!src || f.getAttribute('src')) return;
-            if (location.protocol !== 'file:') {
-                try { const r = await fetch(src, { method: 'HEAD' }); if (!r.ok) src = 'Admin/' + src; }
-                catch (e) { src = 'Admin/' + src; }
-            }
-            f.setAttribute('src', src);
-        };
-        // Owner grants/revokes builder access per staff member. Stored at staff/{key}/tools.
-        window.saveStaffTools = async (key) => {
-            const cape = document.getElementById('tool-cape-' + key);
-            const shield = document.getElementById('tool-shield-' + key);
-            const tools = { cape_builder: !!(cape && cape.checked), shield_builder: !!(shield && shield.checked) };
-            try {
-                await update(ref(db, 'staff/' + key), { tools, toolsUpdatedAt: Date.now() });
-                alert('Builder access saved. The staff member will see the change within seconds (or next time they open the staff panel).');
-            } catch (e) {
-                alert('Could not save builder access: ' + (e && e.message || e));
-            }
-        };
         function loadStaffManage() {
             if (!document.getElementById('view-staff')) return;
-            if (_staffWatching) { renderStaffPending(window._staffReqCache || {}); renderStaffActive(window._staffCache || {}); if (typeof renderStaffBadges === 'function') renderStaffBadges(window._badgeCache || {}); return; }
+            if (_staffWatching) { renderStaffPending(window._staffReqCache || {}); renderStaffActive(window._staffCache || {}); return; }
             _staffWatching = true;
             onValue(ref(db, 'staff_requests'), snap => { window._staffReqCache = snap.val() || {}; renderStaffPending(window._staffReqCache); updateStaffBadge(); });
             onValue(ref(db, 'staff'), snap => { window._staffCache = snap.val() || {}; renderStaffActive(window._staffCache); });
-            onValue(ref(db, 'role_badges'), snap => { window._badgeCache = snap.val() || {}; renderStaffBadges(window._badgeCache); });
         }
         function updateStaffBadge() {
             const reqs = window._staffReqCache || {};
@@ -4005,9 +3734,7 @@
                 .filter(s => s && s.username)
                 .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
             if (!entries.length) { list.innerHTML = '<p style="opacity:0.5;">No active staff yet. Approve a request above and they will show up here.</p>'; return; }
-            list.innerHTML = entries.map(s => {
-                const tools = s.tools || {};
-                return `
+            list.innerHTML = entries.map(s => `
                 <div class="post-item">
                     <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px;">
                         <img src="https://minotar.net/helm/${encodeURIComponent(s.mcname || s.username)}/32.png" onerror="this.src='https://minotar.net/helm/MHF_Question/32.png'" style="width:32px;height:32px;border-radius:8px;">
@@ -4016,18 +3743,10 @@
                             <div style="font-size:12px;opacity:.6;">${s.approved === false ? 'disabled' : 'active'} &bull; since ${new Date(s.approvedAt || s.createdAt || Date.now()).toLocaleDateString()}</div>
                         </div>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:8px;min-width:180px;">
-                        <div style="display:flex;gap:12px;font-size:12px;align-items:center;">
-                            <label style="display:flex;align-items:center;gap:6px;margin:0;cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" id="tool-cape-${s.key}" ${tools.cape_builder ? 'checked' : ''}> Cape Builder</label>
-                            <label style="display:flex;align-items:center;gap:6px;margin:0;cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" id="tool-shield-${s.key}" ${tools.shield_builder ? 'checked' : ''}> Shield Builder</label>
-                        </div>
-                        <button class="button-secondary" onclick="saveStaffTools('${s.key}')">Save builder access</button>
-                    </div>
                     <select id="srole-${s.key}" class="staff-role-select">${staffRoleOptions(s.role || 'Staff')}</select>
                     <button class="button-secondary" onclick="saveStaffRole('${s.key}')">Save role</button>
                     <button class="button-secondary" style="color:#ef4444;border-color:#ef4444;" onclick="removeStaff('${s.key}')">Remove</button>
-                </div>`;
-            }).join('');
+                </div>`).join('');
         }
         window.approveStaffRequest = async (reqId) => {
             const roleSel = document.getElementById('role-' + reqId);
@@ -4071,31 +3790,8 @@
             await remove(ref(db, 'staff/' + key));
         };
 
-        const STAFF_BADGE_DEFAULTS = { Owner: '#ef4444', Admin: '#3b82f6', Manager: '#a855f7', Moderator: '#22c55e', Developer: '#f59e0b', Support: '#06b6d4', Staff: '#8C8680', Helper: '#84cc16', 'Trial Staff': '#71717a' };
-        function renderStaffBadges(custom) {
-            const list = document.getElementById('staff-badge-list');
-            if (!list) return;
-            list.innerHTML = STAFF_ROLES.map(r => {
-                const bg = (custom && custom[r] && custom[r].bg) || STAFF_BADGE_DEFAULTS[r] || '#8C8680';
-                return `<div class="post-item">
-                    <div style="flex:1;min-width:140px;font-weight:800;">${escHtml(r)}</div>
-                    <span id="badge-preview-${r}" style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:4px 12px 5px;background:${bg};color:#fff;text-shadow:1px 1px 0 rgba(0,0,0,.5);clip-path:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px),0 4px,4px 4px);box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 -3px 0 rgba(0,0,0,.35);filter:drop-shadow(2px 2px 0 rgba(0,0,0,.45));">${escHtml(r)}</span>
-                    <input type="color" value="${bg}" onchange="saveBadgeColor('${r}', this.value)" style="width:56px;height:38px;padding:2px;cursor:pointer;background:var(--black);border:1px solid var(--glass-border);border-radius:10px;" title="Pick badge color">
-                </div>`;
-            }).join('');
-        }
-        window.saveBadgeColor = async (role, color) => {
-            await set(ref(db, 'role_badges/' + role), { bg: color, updatedAt: Date.now() });
-            const prev = document.getElementById('badge-preview-' + role);
-            if (prev) prev.style.background = color;
-        };
-        window.resetBadgeColors = async () => {
-            if (!confirm('Reset all role badge colors to defaults?')) return;
-            await remove(ref(db, 'role_badges'));
-        };
-
         loadTeam();
-        loadSalaries();
+        
         // ============ BLOG POSTS ============
         const blogInputTitle = document.getElementById('blog-title');
         const blogInputImage = document.getElementById('blog-image');
@@ -4403,9 +4099,7 @@
                     id: cape.id, name: cape.name,
                     category: cape.category || 'CAPE',
                     texture: cape.texture || `textures/${cat}s/${cape.id}.png`,
-                    // never guessed: if no icon is stored, the card falls back to the managed
-// loader instead of showing a broken image.
-icon: cape.icon || existing?.icon || '',
+                    icon: cape.icon || existing?.icon || `https://raw.githubusercontent.com/SoulTeams/Soul-Capes/main/capes/${cape.id}.png`,
                     animated: cape.animated || false,
                     free: cape.free === true,
                     frameCount: cape.frameCount || 0,
@@ -5828,6 +5522,239 @@ function generateCode() {
                 update(ref(db, `job_applications/${selectedJobApp}`), { unread: false }).catch(() => {});
             }
         };
+
+        // ============ STAFF LOGIN GATE (staff panel only - owner panel has no overlay so this never runs there) ============
+        function staffStoredSession() {
+            try { const v = localStorage.getItem('soul_staff_session'); if (v) return { data: JSON.parse(v) }; } catch (e) {}
+            try { const v = sessionStorage.getItem('soul_staff_session'); if (v) return { data: JSON.parse(v) }; } catch (e) {}
+            return null;
+        }
+        function staffSaveSession(key, username, remember) {
+            const v = JSON.stringify({ key, username, loginAt: Date.now() });
+            try { localStorage.removeItem('soul_staff_session'); sessionStorage.removeItem('soul_staff_session'); } catch (e) {}
+            try { (remember ? localStorage : sessionStorage).setItem('soul_staff_session', v); } catch (e) {}
+        }
+        function staffClearSession() {
+            try { localStorage.removeItem('soul_staff_session'); sessionStorage.removeItem('soul_staff_session'); } catch (e) {}
+            try { localStorage.removeItem('soul_staff_pending'); } catch (e) {}
+        }
+        function staffShowOverlay(show) {
+            const o = document.getElementById('staff-auth-overlay');
+            if (o) o.style.display = show ? 'flex' : 'none';
+        }
+        function staffMsg(id, text, ok) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.style.display = text ? 'block' : 'none';
+            el.innerText = text || '';
+            el.style.borderColor = ok ? 'var(--bolt)' : '#ef4444';
+            el.style.color = ok ? 'var(--bolt)' : '#ef4444';
+        }
+        // ============ BUILDER ACCESS (owner grants per staff member at staff/{key}/tools) ============
+        // Builder tool iframes load only on first open. Probes the sibling path first,
+        // falls back to ./Admin/... if the panel is hosted at the site root.
+        window.soulBuilderB64Text = function(b64) {
+            try {
+                const bin = atob(String(b64).replace(/\s+/g, ''));
+                const bytes = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                return new TextDecoder('utf-8').decode(bytes);
+            } catch (e) { return ''; }
+        };
+        // Builder tool iframes load from the EMBEDDED copies (base64 templates at
+        // the bottom of this file) so they work on any host with no extra files.
+        window.lazyBuilderFrame = async function(frameId) {
+            const f = document.getElementById(frameId);
+            if (!f) return;
+            if (f.__builderLoaded) return;
+            const kind = /shield/i.test(frameId) ? 'shield' : 'cape';
+            const tpl = document.getElementById('soul-builder-src-' + kind);
+            if (tpl && String(tpl.textContent).replace(/\s+/g, '').length > 200) {
+                f.__builderLoaded = true;
+                f.setAttribute('srcdoc', window.soulBuilderB64Text(tpl.textContent));
+                return;
+            }
+            // Fallback: legacy external files (still works when served locally).
+            let src = f.dataset ? f.dataset.src : '';
+            if (!src || f.getAttribute('src')) return;
+            if (location.protocol !== 'file:') {
+                try { const r = await fetch(src, { method: 'HEAD' }); if (!r.ok) src = 'Admin/' + src; }
+                catch (e) { src = 'Admin/' + src; }
+            }
+            f.setAttribute('src', src);
+        };
+        function applyBuilderTools(tools) {
+            const cape = !!(tools && tools.cape_builder);
+            const shield = !!(tools && tools.shield_builder);
+            const nc = document.getElementById('nav-cape-builder');
+            const ns = document.getElementById('nav-shield-builder');
+            if (nc) nc.style.display = cape ? '' : 'none';
+            if (ns) ns.style.display = shield ? '' : 'none';
+            // If access was revoked while the tool was open, drop back to the dashboard.
+            [['view-cape-builder', cape], ['view-shield-builder', shield]].forEach(([viewId, allowed]) => {
+                const view = document.getElementById(viewId);
+                if (view && view.classList.contains('active') && !allowed) {
+                    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+                    document.querySelectorAll('.admin-view').forEach(v => v.classList.remove('active'));
+                    const dash = document.getElementById('view-dashboard');
+                    if (dash) dash.classList.add('active');
+                    const dashNav = document.querySelector('.nav-item[data-target="view-dashboard"]');
+                    if (dashNav) dashNav.classList.add('active');
+                }
+            });
+        }
+        let _builderToolsWatched = false;
+        function watchBuilderTools(key) {
+            if (!key) { applyBuilderTools(null); return; }
+            if (_builderToolsWatched) return;
+            _builderToolsWatched = true;
+            onValue(ref(db, 'staff/' + key + '/tools'), snap => applyBuilderTools(snap.val() || {}));
+        }
+        function enterStaffPanel(entry) {
+            staffShowOverlay(false);
+            // Replies from the staff panel send as the logged-in staff member (shown on the website), not "Administrator"
+            adminName = entry.username || 'Staff';
+            adminAvatar = 'https://minotar.net/helm/' + encodeURIComponent(entry.mcname || entry.username) + '/32.png';
+            adminRole = entry.role || 'Staff';
+            const chip = document.getElementById('staff-user-chip');
+            if (chip) {
+                chip.style.display = 'flex';
+                chip.innerHTML = `<img src="https://minotar.net/helm/${encodeURIComponent(entry.mcname || entry.username)}/32.png" onerror="this.src='https://minotar.net/helm/MHF_Question/32.png'">`
+                    + `<div><div style="font-weight:800;">${escHtml(entry.username)}</div><div class="chip-role">${escHtml(entry.role || 'Staff')}</div></div>`
+                    + `<button id="btn-staff-logout" type="button">Logout</button>`;
+                document.getElementById('btn-staff-logout').onclick = () => { staffClearSession(); location.reload(); };
+            }
+            document.title = 'Soul Staff - ' + entry.username;
+            // Owner always has both builders; other staff only see what the owner granted (live-updated).
+            if ((entry.role || 'Staff') === 'Owner') { applyBuilderTools({ cape_builder: true, shield_builder: true }); }
+            else { watchBuilderTools(entry.key); }
+        }
+        let _staffPollTimer = null;
+        function staffStopPoll() { if (_staffPollTimer) { clearInterval(_staffPollTimer); _staffPollTimer = null; } }
+        function staffShowTab(which) {
+            const tl = document.getElementById('tab-login'), ts = document.getElementById('tab-signup');
+            const pl = document.getElementById('pane-login'), ps = document.getElementById('pane-signup'), pw = document.getElementById('pane-waiting');
+            if (!tl) return;
+            tl.classList.toggle('active', which === 'login');
+            ts.classList.toggle('active', which === 'signup');
+            pl.style.display = which === 'login' ? 'block' : 'none';
+            ps.style.display = which === 'signup' ? 'block' : 'none';
+            pw.style.display = 'none';
+            staffShowOverlay(true);
+        }
+        function showWaitingAndPoll(reqId, username, remember) {
+            document.getElementById('pane-login').style.display = 'none';
+            document.getElementById('pane-signup').style.display = 'none';
+            document.getElementById('pane-waiting').style.display = 'block';
+            document.getElementById('staff-wait-user').innerText = 'Signed up as: ' + username;
+            staffShowOverlay(true);
+            staffStopPoll();
+            const check = async () => {
+                let snap = null;
+                try { snap = await get(ref(db, 'staff_requests/' + reqId)); } catch (e) { return; }
+                const r = snap && snap.val();
+                if (!r) return;
+                if (r.status === 'approved') {
+                    staffStopPoll();
+                    const key = r.staffKey || staffKeyFor(r.username);
+                    let s = null;
+                    try { s = (await get(ref(db, 'staff/' + key))).val(); } catch (e) {}
+                    s = s || { username: r.username, role: r.role || 'Staff', mcname: r.mcname };
+                    const rem = (typeof remember === 'boolean') ? remember : document.getElementById('staff-signup-remember').checked;
+                    staffSaveSession(key, s.username || r.username, rem);
+                    try { localStorage.removeItem('soul_staff_pending'); } catch (e) {}
+                    enterStaffPanel({ key, ...s });
+                } else if (r.status === 'denied') {
+                    staffStopPoll();
+                    try { localStorage.removeItem('soul_staff_pending'); } catch (e) {}
+                    staffShowTab('signup');
+                    staffMsg('staff-signup-msg', 'The owner denied this request. Contact the owner if you think this is a mistake.');
+                }
+            };
+            check();
+            _staffPollTimer = setInterval(check, 3000);
+        }
+        async function staffLogin() {
+            const u = document.getElementById('staff-login-user').value.trim();
+            const p = document.getElementById('staff-login-pass').value;
+            const remember = document.getElementById('staff-login-remember').checked;
+            if (!u || !p) return staffMsg('staff-login-msg', 'Enter your username and password.');
+            staffMsg('staff-login-msg', '');
+            let snap = null;
+            try { snap = await get(ref(db, 'staff/' + staffKeyFor(u))); } catch (e) { return staffMsg('staff-login-msg', 'Could not reach the database. Open this page over http (not file://) and check your connection.'); }
+            const s = snap.val();
+            if (!s || s.approved === false) return staffMsg('staff-login-msg', 'No active staff account for that username. Sign up first - the owner approves you once, then you can log in.');
+            const h = await staffHash(u, p);
+            if (h !== s.passHash) return staffMsg('staff-login-msg', 'Wrong password.');
+            staffSaveSession(staffKeyFor(u), s.username, remember);
+            try { localStorage.removeItem('soul_staff_pending'); } catch (e) {}
+            enterStaffPanel({ key: staffKeyFor(u), ...s });
+        }
+        async function staffSignup() {
+            const u = document.getElementById('staff-signup-user').value.trim();
+            const p = document.getElementById('staff-signup-pass').value;
+            const mc = document.getElementById('staff-signup-mc').value.trim();
+            const remember = document.getElementById('staff-signup-remember').checked;
+            if (u.length < 3) return staffMsg('staff-signup-msg', 'Username needs at least 3 characters.');
+            if (!/^[a-zA-Z0-9_]+$/.test(u)) return staffMsg('staff-signup-msg', 'Username: letters, numbers and underscore only.');
+            if (p.length < 4) return staffMsg('staff-signup-msg', 'Password needs at least 4 characters.');
+            staffMsg('staff-signup-msg', '');
+            const key = staffKeyFor(u);
+            try {
+                const ex = await get(ref(db, 'staff/' + key));
+                if (ex.exists()) return staffMsg('staff-signup-msg', 'That username is already registered - just log in instead.');
+                const all = await get(ref(db, 'staff_requests'));
+                const reqs = all.val() || {};
+                for (const [id, r] of Object.entries(reqs)) {
+                    if (r && r.status === 'pending' && String(r.username || '').toLowerCase() === u.toLowerCase()) {
+                        try { localStorage.setItem('soul_staff_pending', id); } catch (e) {}
+                        showWaitingAndPoll(id, r.username, remember);
+                        return;
+                    }
+                }
+                const h = await staffHash(u, p);
+                const r = push(ref(db, 'staff_requests'));
+                await set(r, { username: u, passHash: h, mcname: mc || null, status: 'pending', createdAt: Date.now() });
+                try { localStorage.setItem('soul_staff_pending', r.key); } catch (e) {}
+                showWaitingAndPoll(r.key, u, remember);
+            } catch (e) { staffMsg('staff-signup-msg', 'Could not reach the database. Open this page over http (not file://) and check your connection.'); }
+        }
+        function initStaffGate() {
+            if (!document.getElementById('staff-auth-overlay')) return; // owner panel: open, no login
+            document.getElementById('tab-login').onclick = () => staffShowTab('login');
+            document.getElementById('tab-signup').onclick = () => staffShowTab('signup');
+            document.getElementById('btn-staff-login').onclick = staffLogin;
+            document.getElementById('btn-staff-signup').onclick = staffSignup;
+            document.getElementById('staff-login-pass').onkeydown = (e) => { if (e.key === 'Enter') staffLogin(); };
+            document.getElementById('staff-signup-pass').onkeydown = (e) => { if (e.key === 'Enter') staffSignup(); };
+            document.getElementById('btn-staff-cancel-req').onclick = async () => {
+                staffStopPoll();
+                try {
+                    const pid = localStorage.getItem('soul_staff_pending');
+                    if (pid) await remove(ref(db, 'staff_requests/' + pid)).catch(() => {});
+                    localStorage.removeItem('soul_staff_pending');
+                } catch (e) {}
+                staffShowTab('signup');
+            };
+            (async () => {
+                const sess = staffStoredSession();
+                if (sess && sess.data && sess.data.key) {
+                    try {
+                        const snap = await get(ref(db, 'staff/' + sess.data.key));
+                        const s = snap.val();
+                        if (s && s.approved !== false && s.username && String(s.username).toLowerCase() === String(sess.data.username || '').toLowerCase()) {
+                            enterStaffPanel({ key: sess.data.key, ...s });
+                            return;
+                        }
+                    } catch (e) {}
+                    staffClearSession(); // removed or disabled by owner -> force logout
+                }
+                let pendingId = null;
+                try { pendingId = localStorage.getItem('soul_staff_pending'); } catch (e) {}
+                if (pendingId) showWaitingAndPoll(pendingId, '...', null);
+                else staffShowTab('login');
+            })();
+        }
 
         if (document.getElementById('view-staff')) loadStaffManage();
         if (typeof initStaffGate === 'function') initStaffGate();
