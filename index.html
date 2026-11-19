@@ -6688,9 +6688,22 @@ function generateCode() {
             staffShowOverlay(true);
             staffStopPoll();
             const check = async () => {
-                let snap = null;
-                try { snap = await get(ref(db, 'staff_requests/' + reqId)); } catch (e) { return; }
-                const r = snap && snap.val();
+                let r = null;
+                try { r = (await get(ref(db, 'staff_requests/' + reqId))).val(); } catch (e) {}
+                // 'staff_requests' is Owner-read only under locked rules, so the poll
+                // above will normally be denied. Approval also writes a public 'team'
+                // entry - use that as a safe fallback to detect approval.
+                if (!r || r.status === 'pending') {
+                    try {
+                        const team = (await get(ref(db, 'team'))).val() || {};
+                        for (const m of Object.values(team)) {
+                            if (m && m.fromStaff === true && String(m.name || '').toLowerCase() === String(username || '').toLowerCase()) {
+                                r = { status: 'approved', username: m.name, role: m.role || 'Staff', mcname: m.mcname, teamKey: m.teamKey };
+                                break;
+                            }
+                        }
+                    } catch (e) {}
+                }
                 if (!r) return;
                 if (r.status === 'approved') {
                     staffStopPoll();
@@ -6783,19 +6796,48 @@ function generateCode() {
             const remember = document.getElementById('staff-login-remember').checked;
             if (!u || !p) return staffMsg('staff-login-msg', 'Enter your username and password.');
             staffMsg('staff-login-msg', '');
-            let snap = null;
-            try { snap = await get(ref(db, 'staff/' + staffKeyFor(u))); } catch (e) { return staffMsg('staff-login-msg', 'Could not reach the database. Open this page over http (not file://) and check your connection.'); }
-            const s = snap.val();
+            const skey = staffKeyFor(u);
+            let s = null;
+            try { s = (await get(ref(db, 'staff/' + skey))).val(); } catch (e) { /* rules may block this read for non-owner users */ }
+            if (!s) {
+                // Fallback: public team.json (display data) proves the username is active staff.
+                try {
+                    const tv = (await get(ref(db, 'team'))).val() || {};
+                    for (const m of Object.values(tv)) {
+                        if (m && String(m.name || '').trim().toLowerCase() === u.toLowerCase()) {
+                            s = { username: m.name, role: m.role || 'Staff', mcname: m.mcname || null, approved: true };
+                            break;
+                        }
+                    }
+                } catch (e2) {}
+            }
             if (!s || s.approved === false) return staffMsg('staff-login-msg', 'No active staff account for that username. Sign up first - the owner approves you once, then you can log in.');
-            const h = await staffHash(u, p);
-            if (h !== s.passHash) return staffMsg('staff-login-msg', 'Wrong password.');
-            const authRes = await ensureFirebaseAuth('st', u, p);
-            if (!authRes.ok) return staffMsg('staff-login-msg', 'Admin sign-in failed: ' + authRes.reason);
+            if (s.passHash) {
+                // Legacy credential: passHash still stored on this record.
+                const h = await staffHash(u, p);
+                if (h !== s.passHash) return staffMsg('staff-login-msg', 'Wrong password.');
+                const authRes = await ensureFirebaseAuth('st', u, p);
+                if (!authRes.ok) return staffMsg('staff-login-msg', 'Admin sign-in failed: ' + authRes.reason);
+            } else {
+                // passHash was removed from the DB (security): Firebase Auth is the
+                // credential check now. Auth accounts are provisioned by the owner,
+                // so there is NO auto-create here - nobody can claim a staff username.
+                const email = adminAuthEmail('st', u);
+                try {
+                    await firebase.auth().signInWithEmailAndPassword(email, p);
+                } catch (e) {
+                    const code = (e && e.code) || '';
+                    if (code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials' || code === 'auth/wrong-password') return staffMsg('staff-login-msg', 'Wrong password.');
+                    if (code === 'auth/too-many-requests') return staffMsg('staff-login-msg', 'Too many attempts - try again in a minute.');
+                    if (code === 'auth/network-request-failed') return staffMsg('staff-login-msg', 'Network error during sign-in - check your connection.');
+                    return staffMsg('staff-login-msg', 'Admin sign-in failed: ' + ((e && e.message) || code));
+                }
+            }
             const access = await registerAdminAccess(s.username || u, s.role || 'Staff');
             adminAccessBanner(access.state === 'granted' ? 'granted' : 'pending');
-            staffSaveSession(staffKeyFor(u), s.username, remember);
+            staffSaveSession(skey, s.username, remember);
             try { localStorage.removeItem('soul_staff_pending'); } catch (e) {}
-            enterStaffPanel({ key: staffKeyFor(u), ...s });
+            enterStaffPanel({ key: skey, ...s });
         }
         async function staffSignup() {
             const u = document.getElementById('staff-signup-user').value.trim();
@@ -6810,23 +6852,31 @@ function generateCode() {
             if (!authRes.ok) return staffMsg('staff-signup-msg', 'Admin account setup failed: ' + authRes.reason);
             const key = staffKeyFor(u);
             try {
-                const ex = await get(ref(db, 'staff/' + key));
-                if (ex.exists()) return staffMsg('staff-signup-msg', 'That username is already registered - just log in instead.');
-                const all = await get(ref(db, 'staff_requests'));
-                const reqs = all.val() || {};
-                for (const [id, r] of Object.entries(reqs)) {
-                    if (r && r.status === 'pending' && String(r.username || '').toLowerCase() === u.toLowerCase()) {
-                        try { localStorage.setItem('soul_staff_pending', id); } catch (e) {}
-                        showWaitingAndPoll(id, r.username, remember);
-                        return;
+                // Locked rules: 'staff' is Owner-only and 'staff_requests' is Owner-read.
+                // A signup is EXPECTED to be denied these reads - treat them as
+                // best-effort duplicate checks so they cannot block the request.
+                let alreadyStaff = false;
+                try { alreadyStaff = (await get(ref(db, 'staff/' + key))).exists(); } catch (e) {}
+                if (alreadyStaff) return staffMsg('staff-signup-msg', 'That username is already registered - just log in instead.');
+                try {
+                    const all = await get(ref(db, 'staff_requests'));
+                    const reqs = all.val() || {};
+                    for (const [id, r] of Object.entries(reqs)) {
+                        if (r && r.status === 'pending' && String(r.username || '').toLowerCase() === u.toLowerCase()) {
+                            try { localStorage.setItem('soul_staff_pending', id); } catch (e) {}
+                            showWaitingAndPoll(id, r.username, remember);
+                            return;
+                        }
                     }
-                }
-                const h = await staffHash(u, p);
+                } catch (e) { /* Owner-only read - skip duplicate check, rules still block real duplicates */ }
                 const r = push(ref(db, 'staff_requests'));
-                await set(r, { username: u, passHash: h, mcname: mc || null, status: 'pending', createdAt: Date.now() });
+                await set(r, { username: u, mcname: mc || null, status: 'pending', createdAt: Date.now() });
                 try { localStorage.setItem('soul_staff_pending', r.key); } catch (e) {}
                 showWaitingAndPoll(r.key, u, remember);
-            } catch (e) { staffMsg('staff-signup-msg', 'Could not reach the database. Open this page over http (not file://) and check your connection.'); }
+            } catch (e) {
+                const code = (e && e.code) ? ' (' + e.code + ')' : '';
+                staffMsg('staff-signup-msg', 'Could not submit your request' + code + '. Check your connection and try again.');
+            }
         }
         // ============ BETA TESTER MODE ============
         // Beta testers log in on THIS page with the same form. They land in the
@@ -6922,24 +6972,34 @@ function generateCode() {
             const authRes = await ensureFirebaseAuth('bt', u, p);
             if (!authRes.ok) return staffMsg('staff-signup-msg', 'Account setup failed: ' + authRes.reason);
             try {
-                const exB = await get(ref(db, 'beta_accounts/' + betaKeyFor(u)));
-                const exS = await get(ref(db, 'staff/' + staffKeyFor(u)));
-                if (exB.exists() || exS.exists()) { staffMsg('staff-signup-msg', 'That username is already registered - just log in instead.', true); return; }
-                const all = await get(ref(db, 'beta_requests'));
-                const reqs = all.val() || {};
-                for (const [id, r] of Object.entries(reqs)) {
-                    if (r && r.status === 'pending' && String(r.username || '').toLowerCase() === u.toLowerCase()) {
-                        try { localStorage.setItem('soul_beta_pending', id); } catch (e) {}
-                        showBetaWaitingAndPoll(id, r.username, remember);
-                        return;
+                // Owner-only reads under locked rules - best effort only.
+                let existing = false;
+                try {
+                    const exB = await get(ref(db, 'beta_accounts/' + betaKeyFor(u)));
+                    const exS = await get(ref(db, 'staff/' + staffKeyFor(u)));
+                    existing = exB.exists() || exS.exists();
+                } catch (e) {}
+                if (existing) { staffMsg('staff-signup-msg', 'That username is already registered - just log in instead.', true); return; }
+                try {
+                    const all = await get(ref(db, 'beta_requests'));
+                    const reqs = all.val() || {};
+                    for (const [id, r] of Object.entries(reqs)) {
+                        if (r && r.status === 'pending' && String(r.username || '').toLowerCase() === u.toLowerCase()) {
+                            try { localStorage.setItem('soul_beta_pending', id); } catch (e) {}
+                            showBetaWaitingAndPoll(id, r.username, remember);
+                            return;
+                        }
                     }
-                }
+                } catch (e) { /* Owner-only read - skip duplicate check */ }
                 const h = await staffHash(u, p);
                 const r = push(ref(db, 'beta_requests'));
                 await set(r, { username: u, passHash: h, mcname: mc || null, status: 'pending', source: 'staff-panel', createdAt: Date.now() });
                 try { localStorage.setItem('soul_beta_pending', r.key); } catch (e) {}
                 showBetaWaitingAndPoll(r.key, u, remember);
-            } catch (e) { staffMsg('staff-signup-msg', 'Could not reach the database. Open this page over http (not file://) and check your connection.'); }
+            } catch (e) {
+                const code = (e && e.code) ? ' (' + e.code + ')' : '';
+                staffMsg('staff-signup-msg', 'Could not submit your request' + code + '. Check your connection and try again.');
+            }
         }
 
         function initStaffGate() {
